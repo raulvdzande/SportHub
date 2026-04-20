@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SportHub.API/SportHub.API.csproj" />
+  <Project Path="SportHub.App/SportHub.App.csproj" />
+  <Project Path="SportHub.Shared/SportHub.Shared.csproj" />
+  <Project Path="SportHub.Web/SportHub.Web.csproj" />
+</Solution>
