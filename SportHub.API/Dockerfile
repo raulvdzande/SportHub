@@ -7,7 +7,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SportHub.API/SportHub.API.csproj", "SportHub.API/"]
+COPY ["./SportHub.API.csproj", "SportHub.API/"]
 RUN dotnet restore "SportHub.API/SportHub.API.csproj"
 COPY . .
 WORKDIR "/src/SportHub.API"
