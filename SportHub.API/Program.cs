@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SportHub.API.Infrastructure.Data.DbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 

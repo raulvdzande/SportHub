@@ -16,4 +16,9 @@
     <ProjectReference Include="..\SportHub.Shared\SportHub.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="Layout\MainLayout.razor" />
+    <AdditionalFiles Include="Layout\NavMenu.razor" />
+  </ItemGroup>
+
 </Project>
