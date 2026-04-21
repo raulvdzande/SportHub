@@ -8,7 +8,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["SportHub.API/SportHub.API.csproj", "SportHub.API/"]
-COPY ["SportHub.Shared/SportHub.Shared.csproj", "SportHub.Shared/"]
 RUN dotnet restore "SportHub.API/SportHub.API.csproj"
 COPY . .
 WORKDIR "/src/SportHub.API"
