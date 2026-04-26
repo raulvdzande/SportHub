@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SportHub.API.Application.DTOs.Instructors;
+using SportHub.Shared.DTOs.Instructors;
 using SportHub.API.Application.Interfaces;
 using SportHub.API.Controllers.Requests;
 

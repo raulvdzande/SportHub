@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SportHub.API.Application.DTOs.Auth;
+using SportHub.Shared.DTOs.Auth;
 using SportHub.API.Application.Interfaces;
 using SportHub.API.Domain.Entities;
 using SportHub.API.Infrastructure.Data.DbContext;

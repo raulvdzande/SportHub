@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SportHub.API.Application.DTOs.Workouts;
+using SportHub.Shared.DTOs.Workouts;
 using SportHub.API.Application.Interfaces;
 using SportHub.API.Domain.Entities;
 using SportHub.API.Infrastructure.Data.DbContext;

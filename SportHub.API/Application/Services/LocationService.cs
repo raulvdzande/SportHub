@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SportHub.API.Application.DTOs.Locations;
+using SportHub.Shared.DTOs.Locations;
 using SportHub.API.Application.Interfaces;
 using SportHub.API.Domain.Entities;
 using SportHub.API.Infrastructure.Data.DbContext;

@@ -1,0 +1,17 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SportHub.Shared.DTOs.Instructors;
+
+public class UpdateInstructorRequestDto
+{
+    [Required]
+    [StringLength(160)]
+    public string FullName { get; set; } = string.Empty;
+
+    [StringLength(1024)]
+    public string? PhotoUrl { get; set; }
+
+    public bool IsTbd { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+

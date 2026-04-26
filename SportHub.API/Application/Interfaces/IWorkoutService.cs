@@ -1,4 +1,4 @@
-﻿using SportHub.API.Application.DTOs.Workouts;
+﻿using SportHub.Shared.DTOs.Workouts;
 
 namespace SportHub.API.Application.Interfaces;
 
@@ -10,4 +10,3 @@ public interface IWorkoutService
     Task<WorkoutDto> UpdateAsync(Guid id, UpdateWorkoutRequestDto request, CancellationToken cancellationToken = default);
     Task<int> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
-

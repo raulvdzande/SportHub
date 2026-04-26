@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SportHub.API.Application.DTOs.Auth;
+using SportHub.Shared.DTOs.Auth;
 using SportHub.API.Application.Interfaces;
 
 namespace SportHub.API.Controllers;
@@ -27,4 +27,3 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 }
-

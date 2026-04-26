@@ -1,10 +1,14 @@
-﻿  Determining projects to restore...
-  All projects are up-to-date for restore.
-  SportHub.Shared -> C:\school\leerjaar 2\net\sporthub\SportHub\SportHub.Shared\bin\Debug\net10.0\SportHub.Shared.dll
-  SportHub.API -> C:\school\leerjaar 2\net\sporthub\SportHub\SportHub.API\bin\Debug\net10.0\SportHub.API.dll
-
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
-
-Time Elapsed 00:00:04.32
+﻿ M SportHub.API/Application/Interfaces/IAuthService.cs
+ M SportHub.API/Application/Interfaces/IInstructorService.cs
+ M SportHub.API/Application/Interfaces/ILocationService.cs
+ M SportHub.API/Application/Interfaces/IWorkoutService.cs
+ M SportHub.API/Application/Services/AuthService.cs
+ M SportHub.API/Application/Services/InstructorService.cs
+ M SportHub.API/Application/Services/LocationService.cs
+ M SportHub.API/Application/Services/WorkoutService.cs
+ M SportHub.API/Controllers/AuthController.cs
+ M SportHub.API/Controllers/InstructorsController.cs
+ M SportHub.API/Controllers/LocationsController.cs
+ M SportHub.API/Controllers/WorkoutsController.cs
+ M build-output.txt
+?? SportHub.Shared/DTOs/

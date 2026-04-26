@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SportHub.API.Application.DTOs.Workouts;
+using SportHub.Shared.DTOs.Workouts;
 using SportHub.API.Application.Interfaces;
 
 namespace SportHub.API.Controllers;
@@ -46,14 +46,13 @@ public class WorkoutsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<DeleteWorkoutResponseDto>> Delete(Guid id, CancellationToken cancellationToken)
     {
         var deletedLessonCount = await _workoutService.DeleteAsync(id, cancellationToken);
-        return Ok(new
+        return Ok(new DeleteWorkoutResponseDto
         {
-            message = "Workout and related lessons were deleted.",
-            deletedLessons = deletedLessonCount
+            Message = "Workout and related lessons were deleted.",
+            DeletedLessons = deletedLessonCount
         });
     }
 }
-

@@ -1,4 +1,4 @@
-﻿using SportHub.API.Application.DTOs.Instructors;
+﻿using SportHub.Shared.DTOs.Instructors;
 
 namespace SportHub.API.Application.Interfaces;
 
@@ -10,4 +10,3 @@ public interface IInstructorService
     Task<InstructorDto> UpdateAsync(Guid id, UpdateInstructorRequestDto request, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
-

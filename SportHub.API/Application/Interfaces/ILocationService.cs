@@ -1,4 +1,4 @@
-﻿using SportHub.API.Application.DTOs.Locations;
+﻿using SportHub.Shared.DTOs.Locations;
 
 namespace SportHub.API.Application.Interfaces;
 
@@ -10,4 +10,3 @@ public interface ILocationService
     Task<LocationDto> UpdateAsync(Guid id, UpdateLocationRequestDto request, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
-
