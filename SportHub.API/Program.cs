@@ -32,6 +32,17 @@ builder.Services
     .AddAuthentication("Bearer")
     .AddScheme<AuthenticationSchemeOptions, StaffBearerAuthenticationHandler>("Bearer", _ => { });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebClient", policy =>
+    {
+        policy
+            .WithOrigins("https://localhost:5003", "http://localhost:5002", "https://localhost:5002", "http://localhost:5003")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
@@ -39,6 +50,7 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseStaticFiles();
+app.UseCors("WebClient");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

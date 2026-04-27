@@ -1,0 +1,92 @@
+﻿@page "/instructors"
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApi
+@inject SportHub.Web.Services.Localization.LanguageService Language
+
+<PageTitle>@Language.T("instructors.title")</PageTitle>
+
+<h1>@Language.T("instructors.title")</h1>
+
+<EditForm Model="_model" OnValidSubmit="CreateInstructorAsync" class="mb-4">
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label class="form-label">@Language.T("instructors.name")</label>
+        <InputText class="form-control" @bind-Value="_model.FullName" />
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">@Language.T("instructors.photo")</label>
+        <InputFile OnChange="OnPhotoChanged" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">@Language.T("instructors.save")</button>
+</EditForm>
+
+@if (_instructors is null)
+{
+    <p><em>@Language.T("common.loading")</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>@Language.T("instructors.name")</th>
+                <th>@Language.T("instructors.photo")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in _instructors)
+            {
+                <tr>
+                    <td>@item.FullName</td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.PhotoUrl))
+                        {
+                            <img src="@item.PhotoUrl" alt="@item.FullName" style="height: 56px;" />
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private readonly SportHub.Shared.DTOs.Instructors.CreateInstructorRequestDto _model = new();
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? _photo;
+    private List<SportHub.Shared.DTOs.Instructors.InstructorDto>? _instructors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+        await LoadInstructorsAsync();
+    }
+
+    private async Task LoadInstructorsAsync()
+    {
+        _instructors = (await InstructorsApi.GetAllAsync()).ToList();
+    }
+
+    private void OnPhotoChanged(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs args)
+    {
+        _photo = args.File;
+    }
+
+    private async Task CreateInstructorAsync()
+    {
+        await InstructorsApi.CreateAsync(_model.FullName, _photo, _model.IsTbd, _model.IsActive);
+        _model.FullName = string.Empty;
+        _photo = null;
+        await LoadInstructorsAsync();
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

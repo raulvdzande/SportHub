@@ -1,4 +1,5 @@
-﻿namespace SportHub.Shared.DTOs.Auth;
+﻿
+namespace SportHub.Shared.DTOs.Auth;
 
 public class StaffUserDto
 {

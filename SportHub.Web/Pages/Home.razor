@@ -1,7 +1,23 @@
 ﻿@page "/"
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Localization.LanguageService Language
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@Language.T("home.title")</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@Language.T("home.title")</h1>
+<p>@Language.T("home.subtitle")</p>
 
-Welcome to your new app.
+@code {
+    protected override void OnInitialized()
+    {
+        Language.Changed += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

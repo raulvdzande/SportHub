@@ -1,0 +1,157 @@
+﻿@page "/workouts"
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApi
+@inject SportHub.Web.Services.Localization.LanguageService Language
+
+<PageTitle>@Language.T("workouts.title")</PageTitle>
+
+<h1>@Language.T("workouts.title")</h1>
+
+@if (_workouts is null)
+{
+    <p><em>@Language.T("common.loading")</em></p>
+}
+else
+{
+    <EditForm Model="_editorModel" OnValidSubmit="SaveWorkoutAsync" class="mb-4">
+        <DataAnnotationsValidator />
+
+        <h4>@(_editingId.HasValue ? Language.T("workouts.edit") : Language.T("workouts.new"))</h4>
+
+        <div class="mb-2">
+            <label class="form-label">@Language.T("workouts.name")</label>
+            <InputText class="form-control" @bind-Value="_editorModel.Name" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">@Language.T("workouts.description")</label>
+            <InputText class="form-control" @bind-Value="_editorModel.Description" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">@Language.T("workouts.duration")</label>
+            <InputNumber class="form-control" @bind-Value="_editorModel.DefaultDurationMinutes" />
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="_editorModel.IsActive" />
+            <label class="form-check-label">@Language.T("workouts.active")</label>
+        </div>
+
+        <button class="btn btn-primary me-2" type="submit">@Language.T("workouts.save")</button>
+        @if (_editingId.HasValue)
+        {
+            <button class="btn btn-secondary" type="button" @onclick="CancelEdit">@Language.T("workouts.cancel")</button>
+        }
+    </EditForm>
+
+    @if (!string.IsNullOrWhiteSpace(_deleteMessage))
+    {
+        <div class="alert alert-success">@_deleteMessage</div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>@Language.T("workouts.name")</th>
+                <th>@Language.T("workouts.duration")</th>
+                <th>@Language.T("workouts.active")</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var workout in _workouts)
+            {
+                <tr>
+                    <td>@workout.Name</td>
+                    <td>@workout.DefaultDurationMinutes</td>
+                    <td>@(workout.IsActive ? "Yes" : "No")</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => StartEdit(workout)">@Language.T("workouts.edit")</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteWorkoutAsync(workout.Id)">@Language.T("workouts.delete")</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<SportHub.Shared.DTOs.Workouts.WorkoutDto>? _workouts;
+    private readonly SportHub.Shared.DTOs.Workouts.UpdateWorkoutRequestDto _editorModel = new()
+    {
+        DefaultDurationMinutes = 60,
+        IsActive = true
+    };
+    private Guid? _editingId;
+    private string? _deleteMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+        await LoadWorkoutsAsync();
+    }
+
+    private async Task LoadWorkoutsAsync()
+    {
+        _workouts = (await WorkoutsApi.GetAllAsync()).ToList();
+    }
+
+    private async Task SaveWorkoutAsync()
+    {
+        if (_editingId.HasValue)
+        {
+            await WorkoutsApi.UpdateAsync(_editingId.Value, _editorModel);
+        }
+        else
+        {
+            await WorkoutsApi.CreateAsync(new SportHub.Shared.DTOs.Workouts.CreateWorkoutRequestDto
+            {
+                Name = _editorModel.Name,
+                Description = _editorModel.Description,
+                DefaultDurationMinutes = _editorModel.DefaultDurationMinutes,
+                IsActive = _editorModel.IsActive
+            });
+        }
+
+        CancelEdit();
+        await LoadWorkoutsAsync();
+    }
+
+    private void StartEdit(SportHub.Shared.DTOs.Workouts.WorkoutDto workout)
+    {
+        _editingId = workout.Id;
+        _editorModel.Name = workout.Name;
+        _editorModel.Description = workout.Description;
+        _editorModel.DefaultDurationMinutes = workout.DefaultDurationMinutes;
+        _editorModel.IsActive = workout.IsActive;
+    }
+
+    private void CancelEdit()
+    {
+        _editingId = null;
+        _editorModel.Name = string.Empty;
+        _editorModel.Description = null;
+        _editorModel.DefaultDurationMinutes = 60;
+        _editorModel.IsActive = true;
+    }
+
+    private async Task DeleteWorkoutAsync(Guid id)
+    {
+        var response = await WorkoutsApi.DeleteAsync(id);
+        if (response is not null)
+        {
+            _deleteMessage = $"{Language.T("workouts.deleted.lessons")} {response.DeletedLessons}";
+        }
+
+        await LoadWorkoutsAsync();
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}
