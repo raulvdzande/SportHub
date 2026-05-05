@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using SportHub.Shared.DTOs.Auth;
@@ -27,24 +27,37 @@ public class AuthApiService : IAuthApiService
     public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         var client = _httpClientFactory.CreateClient("ApiAnonymous");
-        using var response = await client.PostAsJsonAsync("api/auth/login", request, cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsJsonAsync("api/auth/login", request, cancellationToken);
+        }
+        catch
+        {
+            // Treat network/CORS/TLS errors as login failure in UI instead of crashing rendering.
+            return null;
+        }
+
+        using (response)
+        {
         if (!response.IsSuccessStatusCode)
         {
             return null;
         }
-        var payload = await response.Content.ReadFromJsonAsync<LoginResponseDto>(cancellationToken);
-        if (payload is null)
-        {
-            return null;
+            var payload = await response.Content.ReadFromJsonAsync<LoginResponseDto>(cancellationToken);
+            if (payload is null)
+            {
+                return null;
+            }
+            _sessionState.SetSession(payload.AccessToken, payload.User);
+            await _storage.SetItemAsync(TokenStorageKey, payload.AccessToken);
+            await _storage.SetItemAsync(UserStorageKey, JsonSerializer.Serialize(payload.User));
+            if (_authenticationStateProvider is ApiAuthenticationStateProvider provider)
+            {
+                provider.NotifyAuthenticationChanged();
+            }
+            return payload;
         }
-        _sessionState.SetSession(payload.AccessToken, payload.User);
-        await _storage.SetItemAsync(TokenStorageKey, payload.AccessToken);
-        await _storage.SetItemAsync(UserStorageKey, JsonSerializer.Serialize(payload.User));
-        if (_authenticationStateProvider is ApiAuthenticationStateProvider provider)
-        {
-            provider.NotifyAuthenticationChanged();
-        }
-        return payload;
     }
     public async Task LogoutAsync()
     {

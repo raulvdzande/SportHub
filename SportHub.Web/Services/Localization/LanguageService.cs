@@ -1,4 +1,4 @@
-﻿using SportHub.Web.Services.Storage;
+using SportHub.Web.Services.Storage;
 
 namespace SportHub.Web.Services.Localization;
 
@@ -18,6 +18,15 @@ public class LanguageService
                 ["nav.instructors"] = "Instructeurs",
                 ["home.title"] = "Medewerker dashboard",
                 ["home.subtitle"] = "Beheer workouts en instructeurs.",
+                ["home.load.error"] = "Dashboardgegevens konden niet worden geladen.",
+                ["home.workouts.count"] = "Aantal workouts",
+                ["home.instructors.count"] = "Aantal instructeurs",
+                ["home.workouts.latest"] = "Recente workouts",
+                ["home.instructors.latest"] = "Recente instructeurs",
+                ["home.workouts.empty"] = "Er zijn nog geen workouts toegevoegd.",
+                ["home.instructors.empty"] = "Er zijn nog geen instructeurs toegevoegd.",
+                ["home.workouts.open"] = "Ga naar workouts",
+                ["home.instructors.open"] = "Ga naar instructeurs",
                 ["login.title"] = "Inloggen",
                 ["login.email"] = "E-mailadres",
                 ["login.password"] = "Wachtwoord",
@@ -49,6 +58,15 @@ public class LanguageService
                 ["nav.instructors"] = "Instructors",
                 ["home.title"] = "Employee dashboard",
                 ["home.subtitle"] = "Manage workouts and instructors.",
+                ["home.load.error"] = "Dashboard data could not be loaded.",
+                ["home.workouts.count"] = "Workouts count",
+                ["home.instructors.count"] = "Instructors count",
+                ["home.workouts.latest"] = "Recent workouts",
+                ["home.instructors.latest"] = "Recent instructors",
+                ["home.workouts.empty"] = "No workouts have been added yet.",
+                ["home.instructors.empty"] = "No instructors have been added yet.",
+                ["home.workouts.open"] = "Open workouts",
+                ["home.instructors.open"] = "Open instructors",
                 ["login.title"] = "Login",
                 ["login.email"] = "Email",
                 ["login.password"] = "Password",
@@ -86,7 +104,17 @@ public class LanguageService
 
     public async Task InitializeAsync()
     {
-        var storedLanguage = await _storage.GetItemAsync(StorageKey);
+        string? storedLanguage;
+        try
+        {
+            storedLanguage = await _storage.GetItemAsync(StorageKey);
+        }
+        catch
+        {
+            // Keep default language when browser storage is unavailable.
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(storedLanguage) && Resources.ContainsKey(storedLanguage))
         {
             CurrentLanguage = storedLanguage;

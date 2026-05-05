@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SportHub.API.Application.Interfaces;
 using SportHub.API.Application.Services;
 using SportHub.API.Configuration;
@@ -9,6 +11,7 @@ using SportHub.API.Infrastructure.Authentication;
 using SportHub.API.Infrastructure.Data.DbContext;
 using SportHub.API.Infrastructure.Services;
 using SportHub.API.Middleware;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,28 +19,52 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.Configure<SeedStaffUserOptions>(builder.Configuration.GetSection(SeedStaffUserOptions.SectionName));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 builder.Services.AddScoped<IInstructorService, InstructorService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddSingleton<IStaffTokenStore, InMemoryStaffTokenStore>();
 builder.Services.AddScoped<IPhotoStorageService, LocalPhotoStorageService>();
 builder.Services.AddScoped<StaffUserSeeder>();
 builder.Services.AddScoped<IPasswordHasher<StaffUser>, PasswordHasher<StaffUser>>();
 
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+var jwtKey = Encoding.UTF8.GetBytes(jwtOptions.SecretKey);
+
 builder.Services
-    .AddAuthentication("Bearer")
-    .AddScheme<AuthenticationSchemeOptions, StaffBearerAuthenticationHandler>("Bearer", _ => { });
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebClient", policy =>
     {
         policy
-            .WithOrigins("https://localhost:5003", "http://localhost:5002", "https://localhost:5002", "http://localhost:5003")
+            .WithOrigins(
+                "https://localhost:7071",
+                "http://localhost:5003",
+                "https://localhost:5003",
+                "http://localhost:5002",
+                "https://localhost:5002")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

@@ -1,4 +1,4 @@
-﻿@page "/workouts"
+@page "/workouts"
 @implements IDisposable
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApi
@@ -14,6 +14,11 @@
 }
 else
 {
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-danger">@_errorMessage</div>
+    }
+
     <EditForm Model="_editorModel" OnValidSubmit="SaveWorkoutAsync" class="mb-4">
         <DataAnnotationsValidator />
 
@@ -86,6 +91,7 @@ else
     };
     private Guid? _editingId;
     private string? _deleteMessage;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,23 +106,31 @@ else
 
     private async Task SaveWorkoutAsync()
     {
-        if (_editingId.HasValue)
+        _errorMessage = null;
+        try
         {
-            await WorkoutsApi.UpdateAsync(_editingId.Value, _editorModel);
-        }
-        else
-        {
-            await WorkoutsApi.CreateAsync(new SportHub.Shared.DTOs.Workouts.CreateWorkoutRequestDto
+            if (_editingId.HasValue)
             {
-                Name = _editorModel.Name,
-                Description = _editorModel.Description,
-                DefaultDurationMinutes = _editorModel.DefaultDurationMinutes,
-                IsActive = _editorModel.IsActive
-            });
-        }
+                await WorkoutsApi.UpdateAsync(_editingId.Value, _editorModel);
+            }
+            else
+            {
+                await WorkoutsApi.CreateAsync(new SportHub.Shared.DTOs.Workouts.CreateWorkoutRequestDto
+                {
+                    Name = _editorModel.Name,
+                    Description = _editorModel.Description,
+                    DefaultDurationMinutes = _editorModel.DefaultDurationMinutes,
+                    IsActive = _editorModel.IsActive
+                });
+            }
 
-        CancelEdit();
-        await LoadWorkoutsAsync();
+            CancelEdit();
+            await LoadWorkoutsAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            _errorMessage = "Je sessie is verlopen. Log opnieuw in.";
+        }
     }
 
     private void StartEdit(SportHub.Shared.DTOs.Workouts.WorkoutDto workout)
@@ -139,13 +153,21 @@ else
 
     private async Task DeleteWorkoutAsync(Guid id)
     {
-        var response = await WorkoutsApi.DeleteAsync(id);
-        if (response is not null)
+        _errorMessage = null;
+        try
         {
-            _deleteMessage = $"{Language.T("workouts.deleted.lessons")} {response.DeletedLessons}";
-        }
+            var response = await WorkoutsApi.DeleteAsync(id);
+            if (response is not null)
+            {
+                _deleteMessage = $"{Language.T("workouts.deleted.lessons")} {response.DeletedLessons}";
+            }
 
-        await LoadWorkoutsAsync();
+            await LoadWorkoutsAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            _errorMessage = "Je sessie is verlopen. Log opnieuw in.";
+        }
     }
 
     private void OnLanguageChanged() => InvokeAsync(StateHasChanged);

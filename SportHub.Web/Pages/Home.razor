@@ -1,6 +1,9 @@
 ﻿@page "/"
 @implements IDisposable
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject NavigationManager Navigation
+@inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApi
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApi
 @inject SportHub.Web.Services.Localization.LanguageService Language
 
 <PageTitle>@Language.T("home.title")</PageTitle>
@@ -8,10 +11,123 @@
 <h1>@Language.T("home.title")</h1>
 <p>@Language.T("home.subtitle")</p>
 
+@if (_isLoading)
+{
+    <p><em>@Language.T("common.loading")</em></p>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-warning">@_errorMessage</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@Language.T("home.workouts.count")</h5>
+                    <p class="display-6 mb-0">@_workouts.Count</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@Language.T("home.instructors.count")</h5>
+                    <p class="display-6 mb-0">@_instructors.Count</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@Language.T("home.workouts.latest")</h5>
+                    @if (_workouts.Count == 0)
+                    {
+                        <p class="text-muted">@Language.T("home.workouts.empty")</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var workout in _workouts.Take(5))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>@workout.Name</span>
+                                    <span class="badge text-bg-secondary">@workout.DefaultDurationMinutes min</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-primary" @onclick='() => Navigation.NavigateTo("/workouts")'>
+                        @Language.T("home.workouts.open")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@Language.T("home.instructors.latest")</h5>
+                    @if (_instructors.Count == 0)
+                    {
+                        <p class="text-muted">@Language.T("home.instructors.empty")</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var instructor in _instructors.Take(5))
+                            {
+                                <li class="list-group-item">@instructor.FullName</li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-primary" @onclick='() => Navigation.NavigateTo("/instructors")'>
+                        @Language.T("home.instructors.open")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    protected override void OnInitialized()
+    private List<SportHub.Shared.DTOs.Workouts.WorkoutDto> _workouts = new();
+    private List<SportHub.Shared.DTOs.Instructors.InstructorDto> _instructors = new();
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
     {
         Language.Changed += OnLanguageChanged;
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        _errorMessage = null;
+        _isLoading = true;
+        try
+        {
+            _workouts = (await WorkoutsApi.GetAllAsync()).ToList();
+            _instructors = (await InstructorsApi.GetAllAsync()).ToList();
+        }
+        catch
+        {
+            _errorMessage = Language.T("home.load.error");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private void OnLanguageChanged() => InvokeAsync(StateHasChanged);

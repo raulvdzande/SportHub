@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using SportHub.Shared.DTOs.Workouts;
 namespace SportHub.Web.Services.Api;
 public class WorkoutsApiClient : IWorkoutsApiClient
@@ -11,7 +11,14 @@ public class WorkoutsApiClient : IWorkoutsApiClient
     public async Task<IReadOnlyCollection<WorkoutDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var client = _httpClientFactory.CreateClient("Api");
-        var items = await client.GetFromJsonAsync<List<WorkoutDto>>("api/workouts", cancellationToken);
+        using var response = await client.GetAsync("api/workouts", cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return new List<WorkoutDto>();
+        }
+
+        response.EnsureSuccessStatusCode();
+        var items = await response.Content.ReadFromJsonAsync<List<WorkoutDto>>(cancellationToken);
         return items ?? new List<WorkoutDto>();
     }
     public async Task<WorkoutDto> CreateAsync(CreateWorkoutRequestDto request, CancellationToken cancellationToken = default)

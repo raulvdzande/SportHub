@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SportHub.API.Configuration;
@@ -31,24 +31,34 @@ public class StaffUserSeeder
         }
 
         var normalizedEmail = _options.Email.Trim().ToLowerInvariant();
-        var alreadyExists = await _dbContext.StaffUsers.AnyAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
-        if (alreadyExists)
+        var displayName = string.IsNullOrWhiteSpace(_options.DisplayName) ? "Medewerker" : _options.DisplayName.Trim();
+        var existingUser = await _dbContext.StaffUsers.FirstOrDefaultAsync(
+            x => x.Email.ToLower() == normalizedEmail,
+            cancellationToken);
+
+        if (existingUser is null)
         {
-            return;
+            var newUser = new StaffUser
+            {
+                Id = Guid.NewGuid(),
+                Email = _options.Email.Trim(),
+                DisplayName = displayName,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+
+            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, _options.Password);
+            _dbContext.StaffUsers.Add(newUser);
+        }
+        else
+        {
+            existingUser.Email = _options.Email.Trim();
+            existingUser.DisplayName = displayName;
+            existingUser.IsActive = true;
+            // Keep seeded credentials in sync after DB/provider migrations.
+            existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, _options.Password);
         }
 
-        var user = new StaffUser
-        {
-            Id = Guid.NewGuid(),
-            Email = _options.Email.Trim(),
-            DisplayName = string.IsNullOrWhiteSpace(_options.DisplayName) ? "Medewerker" : _options.DisplayName.Trim(),
-            IsActive = true,
-            CreatedAtUtc = DateTime.UtcNow
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, _options.Password);
-
-        _dbContext.StaffUsers.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

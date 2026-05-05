@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components.Forms;
 using SportHub.Shared.DTOs.Instructors;
 namespace SportHub.Web.Services.Api;
@@ -12,7 +12,14 @@ public class InstructorsApiClient : IInstructorsApiClient
     public async Task<IReadOnlyCollection<InstructorDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var client = _httpClientFactory.CreateClient("Api");
-        var items = await client.GetFromJsonAsync<List<InstructorDto>>("api/instructors", cancellationToken);
+        using var response = await client.GetAsync("api/instructors", cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return new List<InstructorDto>();
+        }
+
+        response.EnsureSuccessStatusCode();
+        var items = await response.Content.ReadFromJsonAsync<List<InstructorDto>>(cancellationToken);
         return items ?? new List<InstructorDto>();
     }
     public async Task<InstructorDto> CreateAsync(string fullName, IBrowserFile? photo, bool isTbd, bool isActive, CancellationToken cancellationToken = default)

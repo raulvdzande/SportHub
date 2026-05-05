@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using SportHub.Shared.DTOs.Auth;
@@ -47,15 +47,45 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
             return;
         }
 
-        var token = await _storage.GetItemAsync(TokenStorageKey);
-        var userJson = await _storage.GetItemAsync(UserStorageKey);
+        string? token;
+        string? userJson;
+        try
+        {
+            token = await _storage.GetItemAsync(TokenStorageKey);
+            userJson = await _storage.GetItemAsync(UserStorageKey);
+        }
+        catch
+        {
+            // If browser storage is unavailable or JS interop fails during startup,
+            // fall back to anonymous state instead of breaking app initialization.
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(userJson))
         {
             return;
         }
 
-        var user = JsonSerializer.Deserialize<StaffUserDto>(userJson);
+        StaffUserDto? user;
+        try
+        {
+            user = JsonSerializer.Deserialize<StaffUserDto>(userJson);
+        }
+        catch
+        {
+            // Clear invalid persisted session data instead of crashing startup.
+            try
+            {
+                await _storage.RemoveItemAsync(TokenStorageKey);
+                await _storage.RemoveItemAsync(UserStorageKey);
+            }
+            catch
+            {
+                // Ignore storage cleanup failures; anonymous auth state is still safe.
+            }
+            return;
+        }
+
         if (user is null)
         {
             return;
