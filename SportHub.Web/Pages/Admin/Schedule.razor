@@ -1,0 +1,176 @@
+@page "/admin/schedule"
+@using SportHub.Shared.DTOs.Lessons
+@using SportHub.Shared.DTOs.Locations
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.ILessonsApiClient LessonsApiClient
+@inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApiClient
+@inject SportHub.Web.Services.Api.ILocationsApiClient LocationsApiClient
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApiClient
+
+<PageTitle>Rooster</PageTitle>
+
+<h1>Rooster</h1>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5>Weekoverzicht (@currentWeekStart.ToString("dd-MM-yyyy") - @currentWeekStart.AddDays(6).ToString("dd-MM-yyyy"))</h5>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-sm btn-secondary me-2" @onclick="PreviousWeek">← Vorige week</button>
+                <button class="btn btn-sm btn-secondary" @onclick="NextWeek">Volgende week →</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        @if (lessons == null)
+        {
+            <p>Laden...</p>
+        }
+        else if (!lessons.Any())
+        {
+            <p>Geen lessen in deze week.</p>
+        }
+        else
+        {
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Dag</th>
+                        <th>Lessen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var day in Enumerable.Range(0, 7).Select(offset => currentWeekStart.AddDays(offset)))
+                    {
+                        var dayLessons = GetLessonsForDay(day).ToList();
+
+                        <tr>
+                            <td style="width: 180px;">
+                                <strong>@GetDutchDayName(day.DayOfWeek)</strong><br />
+                                <span class="text-muted">@day.ToString("dd-MM-yyyy")</span>
+                            </td>
+                            <td>
+                                @if (!dayLessons.Any())
+                                {
+                                    <span class="text-muted">Geen lessen</span>
+                                }
+                                else
+                                {
+                                    @foreach (var lesson in dayLessons)
+                                    {
+                                        <div class="border rounded p-2 mb-2">
+                                            <div><strong>@GetWorkoutName(lesson.WorkoutId)</strong></div>
+                                            <div>Datum/tijd: @lesson.StartTimeUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</div>
+                                            <div>Locatie: @GetLocationName(lesson.LocationId)</div>
+                                            <div>Instructeur: @GetInstructorName(lesson.InstructorId, lesson.IsInstructorTbd)</div>
+                                            <div>Duur: @lesson.DurationMinutes min</div>
+                                        </div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private DateTime currentWeekStart = StartOfWeek(DateTime.Today);
+    private List<LessonDto>? lessons;
+    private List<WorkoutDto> workouts = new();
+    private List<LocationDto> locations = new();
+    private List<InstructorDto> instructors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+
+        workouts = (await WorkoutsApiClient.GetAllAsync()).ToList();
+        locations = (await LocationsApiClient.GetAllAsync()).ToList();
+        instructors = (await InstructorsApiClient.GetAllAsync()).ToList();
+
+        await LoadLessons();
+    }
+
+    private async Task LoadLessons()
+    {
+        var weekEnd = currentWeekStart.AddDays(7);
+
+        lessons = (await LessonsApiClient.GetAllAsync())
+            .Where(x => x.StartTimeUtc.ToLocalTime().Date >= currentWeekStart.Date &&
+                        x.StartTimeUtc.ToLocalTime().Date < weekEnd.Date)
+            .OrderBy(x => x.StartTimeUtc)
+            .ToList();
+    }
+
+    private IEnumerable<LessonDto> GetLessonsForDay(DateTime day)
+    {
+        return lessons?.Where(x => x.StartTimeUtc.ToLocalTime().Date == day.Date)
+               ?? Enumerable.Empty<LessonDto>();
+    }
+
+    private async Task PreviousWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(-7);
+        await LoadLessons();
+    }
+
+    private async Task NextWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(7);
+        await LoadLessons();
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = ((int)date.DayOfWeek + 6) % 7;
+        return date.Date.AddDays(-diff);
+    }
+
+    private static string GetDutchDayName(DayOfWeek dayOfWeek) => dayOfWeek switch
+    {
+        DayOfWeek.Monday => "Maandag",
+        DayOfWeek.Tuesday => "Dinsdag",
+        DayOfWeek.Wednesday => "Woensdag",
+        DayOfWeek.Thursday => "Donderdag",
+        DayOfWeek.Friday => "Vrijdag",
+        DayOfWeek.Saturday => "Zaterdag",
+        DayOfWeek.Sunday => "Zondag",
+        _ => dayOfWeek.ToString()
+    };
+
+    private string GetWorkoutName(Guid workoutId)
+        => workouts.FirstOrDefault(x => x.Id == workoutId)?.Name ?? "Onbekende workout";
+
+    private string GetLocationName(Guid locationId)
+        => locations.FirstOrDefault(x => x.Id == locationId)?.Name ?? "Onbekende locatie";
+
+    private string GetInstructorName(Guid? instructorId, bool isInstructorTbd)
+    {
+        if (isInstructorTbd)
+        {
+            return "NNB";
+        }
+
+        if (!instructorId.HasValue)
+        {
+            return "-";
+        }
+
+        return instructors.FirstOrDefault(x => x.Id == instructorId.Value)?.FullName ?? "Onbekende instructeur";
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

@@ -1,4 +1,4 @@
-﻿namespace SportHub.Shared.DTOs.Locations;
+namespace SportHub.Shared.DTOs.Locations;
 
 public class LocationDto
 {
@@ -10,4 +10,5 @@ public class LocationDto
     public int? SpinningBikeCount { get; set; }
     public bool IsActive { get; set; }
 }
+
 

@@ -1,4 +1,5 @@
 @page "/workouts"
+@using System.Net
 @implements IDisposable
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApi
@@ -83,8 +84,8 @@ else
 }
 
 @code {
-    private List<SportHub.Shared.DTOs.Workouts.WorkoutDto>? _workouts;
-    private readonly SportHub.Shared.DTOs.Workouts.UpdateWorkoutRequestDto _editorModel = new()
+    private List<WorkoutDto>? _workouts;
+    private readonly UpdateWorkoutRequestDto _editorModel = new()
     {
         DefaultDurationMinutes = 60,
         IsActive = true
@@ -115,7 +116,7 @@ else
             }
             else
             {
-                await WorkoutsApi.CreateAsync(new SportHub.Shared.DTOs.Workouts.CreateWorkoutRequestDto
+                await WorkoutsApi.CreateAsync(new CreateWorkoutRequestDto
                 {
                     Name = _editorModel.Name,
                     Description = _editorModel.Description,
@@ -133,7 +134,7 @@ else
         }
     }
 
-    private void StartEdit(SportHub.Shared.DTOs.Workouts.WorkoutDto workout)
+    private void StartEdit(WorkoutDto workout)
     {
         _editingId = workout.Id;
         _editorModel.Name = workout.Name;
@@ -164,7 +165,7 @@ else
 
             await LoadWorkoutsAsync();
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
             _errorMessage = "Je sessie is verlopen. Log opnieuw in.";
         }

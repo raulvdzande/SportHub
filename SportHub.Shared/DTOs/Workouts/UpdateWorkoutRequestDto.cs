@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace SportHub.Shared.DTOs.Workouts;
 
@@ -16,4 +16,5 @@ public class UpdateWorkoutRequestDto
 
     public bool IsActive { get; set; } = true;
 }
+
 

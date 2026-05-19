@@ -1,0 +1,216 @@
+@page "/admin/instructors"
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApiClient
+
+<PageTitle>Instructeurs Beheer</PageTitle>
+
+<h1>Instructeurs Beheer</h1>
+
+<div class="card mb-4">
+    <div class="card-header"><h5>Voeg Instructeur toe (met account)</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Naam</label>
+                <input type="text" class="form-control" @bind="newInstructor.FullName" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email (account login)</label>
+                <input type="email" class="form-control" @bind="newInstructor.Email" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Wachtwoord</label>
+                <input type="password" class="form-control" @bind="newInstructor.Password" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Foto URL</label>
+                <input type="text" class="form-control" @bind="newInstructor.PhotoUrl" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Telefoonnummer</label>
+                <input type="text" class="form-control" @bind="newInstructor.PhoneNumber" />
+            </div>
+            <div class="col-md-6 mb-3 d-flex align-items-end">
+                <div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" @bind="newInstructor.IsTbd" id="tbd" />
+                        <label class="form-check-label" for="tbd">Nog niet bekend (nnb)</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" @bind="newInstructor.IsActive" id="active" />
+                        <label class="form-check-label" for="active">Actief</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" @onclick="CreateInstructor">Voeg toe met Account</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5>Alle Instructeurs</h5></div>
+    <div class="card-body">
+        @if (instructors == null)
+        {
+            <p>Laden...</p>
+        }
+        else if (!instructors.Any())
+        {
+            <p>Geen instructeurs.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Naam</th>
+                        <th>Foto</th>
+                        <th>NNB</th>
+                        <th>Status</th>
+                        <th>Account</th>
+                        <th>Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var instr in instructors)
+                    {
+                        <tr>
+                            <td>@instr.FullName</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(instr.PhotoUrl))
+                                {
+                                    <img src="@instr.PhotoUrl" style="height: 40px; border-radius: 50%;" />
+                                }
+                            </td>
+                            <td>@(instr.IsTbd ? "Ja" : "Nee")</td>
+                            <td>@(instr.IsActive ? "Actief" : "Inactief")</td>
+                            <td>@(string.IsNullOrWhiteSpace(instr.Email) ? "--" : instr.Email)</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" @onclick="() => StartEdit(instr)">Bewerk</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteInstructor(instr.Id)">Verwijder</button>
+                            </td>
+                        </tr>
+
+                        @if (editingInstructorId == instr.Id)
+                        {
+                            <tr class="table-warning">
+                                <td colspan="6">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <input class="form-control" placeholder="Naam" @bind="editInstructor.FullName" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input class="form-control" placeholder="Email" @bind="editInstructor.Email" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input class="form-control" placeholder="Telefoon" @bind="editInstructor.PhoneNumber" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input class="form-control" placeholder="Foto URL" @bind="editInstructor.PhotoUrl" />
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-6">
+                                            <input type="password" class="form-control" placeholder="Nieuw wachtwoord (optioneel)" @bind="editInstructor.Password" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" @bind="editInstructor.IsTbd" id="edit-tbd" />
+                                                <label class="form-check-label" for="edit-tbd">NNB</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" @bind="editInstructor.IsActive" id="edit-active" />
+                                                <label class="form-check-label" for="edit-active">Actief</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-success me-2" @onclick="SaveEdit">Opslaan</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Annuleren</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<InstructorDto>? instructors;
+    private CreateInstructorRequestDto newInstructor = new();
+    private Guid? editingInstructorId;
+    private UpdateInstructorRequestDto editInstructor = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+        await LoadInstructors();
+    }
+
+    private async Task LoadInstructors()
+    {
+        instructors = (await InstructorsApiClient.GetAllAsync()).ToList();
+    }
+
+    private async Task CreateInstructor()
+    {
+        await InstructorsApiClient.CreateAsync(newInstructor);
+        newInstructor = new();
+        await LoadInstructors();
+    }
+
+    private void StartEdit(InstructorDto instructor)
+    {
+        editingInstructorId = instructor.Id;
+        editInstructor = new UpdateInstructorRequestDto
+        {
+            FullName = instructor.FullName,
+            Email = instructor.Email,
+            PhoneNumber = instructor.PhoneNumber,
+            PhotoUrl = instructor.PhotoUrl,
+            IsTbd = instructor.IsTbd,
+            IsActive = instructor.IsActive
+        };
+    }
+
+    private async Task SaveEdit()
+    {
+        if (!editingInstructorId.HasValue)
+        {
+            return;
+        }
+
+        await InstructorsApiClient.UpdateAsync(editingInstructorId.Value, editInstructor);
+        editingInstructorId = null;
+        editInstructor = new();
+        await LoadInstructors();
+    }
+
+    private void CancelEdit()
+    {
+        editingInstructorId = null;
+        editInstructor = new();
+    }
+
+    private async Task DeleteInstructor(Guid id)
+    {
+        await InstructorsApiClient.DeleteAsync(id);
+        await LoadInstructors();
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

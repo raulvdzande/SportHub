@@ -1,4 +1,4 @@
-﻿using SportHub.API.Domain.Entities;
+using SportHub.API.Domain.Entities;
 
 namespace SportHub.API.Application.Interfaces;
 

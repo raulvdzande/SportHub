@@ -1,4 +1,4 @@
-﻿using SportHub.Shared.DTOs.Instructors;
+using SportHub.Shared.DTOs.Instructors;
 
 namespace SportHub.API.Application.Interfaces;
 

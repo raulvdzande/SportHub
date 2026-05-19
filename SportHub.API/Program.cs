@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +6,6 @@ using SportHub.API.Application.Interfaces;
 using SportHub.API.Application.Services;
 using SportHub.API.Configuration;
 using SportHub.API.Domain.Entities;
-using SportHub.API.Infrastructure.Authentication;
 using SportHub.API.Infrastructure.Data.DbContext;
 using SportHub.API.Infrastructure.Services;
 using SportHub.API.Middleware;
@@ -17,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<SeedStaffUserOptions>(builder.Configuration.GetSection(SeedStaffUserOptions.SectionName));
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection(StripeOptions.SectionName));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -29,10 +28,23 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 builder.Services.AddScoped<IInstructorService, InstructorService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
+builder.Services.AddScoped<IMemberSubscriptionService, MemberSubscriptionService>();
+builder.Services.AddScoped<IStripePaymentService, StripePaymentService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPhotoStorageService, LocalPhotoStorageService>();
 builder.Services.AddScoped<StaffUserSeeder>();
 builder.Services.AddScoped<IPasswordHasher<StaffUser>, PasswordHasher<StaffUser>>();
+builder.Services.AddScoped<IPasswordHasher<Member>, PasswordHasher<Member>>();
+builder.Services.AddScoped<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
+
+// Register email service (console implementation for development)
+builder.Services.AddScoped<SportHub.API.Application.Interfaces.IEmailService, SportHub.API.Infrastructure.Services.ConsoleEmailService>();
+
+// Register member auth service
+builder.Services.AddScoped<SportHub.API.Application.Interfaces.IMemberAuthService, SportHub.API.Application.Services.MemberAuthService>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 var jwtKey = Encoding.UTF8.GetBytes(jwtOptions.SecretKey);

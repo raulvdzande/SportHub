@@ -1,0 +1,129 @@
+﻿@page "/account/register"
+@layout MainLayout
+@implements IDisposable
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject NavigationManager Navigation
+@inject SportHub.Web.Services.Api.IMembersApiClient MembersApiClient
+
+<PageTitle>Registratie</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Nieuw lid registreren</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    @if (registrationSuccess)
+                    {
+                        <div class="alert alert-success">
+                            <p>Welkom! Je account is aangemaakt.</p>
+                            <p>Je zult automatisch doorgestuurd worden naar de inlogpagina...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3">
+                                <label class="form-label">Voornaam</label>
+                                <InputText class="form-control" @bind-Value="registerModel.FirstName" />
+                                <ValidationMessage For="() => registerModel.FirstName" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Achternaam</label>
+                                <InputText class="form-control" @bind-Value="registerModel.LastName" />
+                                <ValidationMessage For="() => registerModel.LastName" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <InputText class="form-control" type="email" @bind-Value="registerModel.Email" />
+                                <ValidationMessage For="() => registerModel.Email" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Wachtwoord</label>
+                                <InputText class="form-control" type="password" @bind-Value="registerModel.Password" />
+                                <ValidationMessage For="() => registerModel.Password" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Telefoonnummer (optioneel)</label>
+                                <InputText class="form-control" @bind-Value="registerModel.PhoneNumber" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span>Registreren...</span>
+                                }
+                                else
+                                {
+                                    <span>Registreren</span>
+                                }
+                            </button>
+                        </EditForm>
+
+                        <hr />
+                        <p class="text-center">Al lid? <a href="/account/login">Inloggen</a></p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private SportHub.Shared.DTOs.Members.CreateMemberRequestDto registerModel = new();
+    private string errorMessage = "";
+    private bool isSubmitting = false;
+    private bool registrationSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        Language.Changed += OnLanguageChanged;
+    }
+
+    private async Task HandleRegister()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+        try
+        {
+            if (string.IsNullOrWhiteSpace(registerModel.Username) && !string.IsNullOrWhiteSpace(registerModel.Email))
+            {
+                registerModel.Username = registerModel.Email.Split('@')[0];
+            }
+
+            await MembersApiClient.CreateAsync(registerModel);
+            registrationSuccess = true;
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/account/login");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}
+

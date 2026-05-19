@@ -1,0 +1,93 @@
+@page "/account/login"
+@implements IDisposable
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject NavigationManager Navigation
+@inject SportHub.Web.Services.Auth.IAuthApiService AuthApi
+
+<PageTitle>Inloggen</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Inloggen</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    <form @onsubmit="HandleLogin">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" @bind="email" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Wachtwoord</label>
+                            <input type="password" class="form-control" @bind="password" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">
+                            @if (isSubmitting) { <span>Inloggen...</span> } else { <span>Inloggen</span> }
+                        </button>
+                    </form>
+
+                    <hr />
+                    <p class="text-center small">
+                        Nog geen lid? <a href="/account/register">Registreer hier</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string errorMessage = "";
+    private bool isSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        Language.Changed += OnLanguageChanged;
+    }
+
+    private async Task HandleLogin()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+        try
+        {
+            var result = await AuthApi.LoginMemberAsync(new SportHub.Shared.DTOs.Auth.LoginMemberRequestDto
+            {
+                Email = email,
+                Password = password
+            });
+
+            if (result is null)
+            {
+                errorMessage = "Inloggen mislukt. Controleer uw gegevens.";
+                return;
+            }
+
+            Navigation.NavigateTo("/");
+        }
+        catch
+        {
+            errorMessage = "Inloggen mislukt. Controleer uw gegevens.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

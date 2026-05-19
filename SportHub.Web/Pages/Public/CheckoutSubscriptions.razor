@@ -1,0 +1,293 @@
+@page "/checkout-subscriptions"
+@page "/checkout"
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using System.Net
+@using System.Security.Claims
+@using System.Web
+@using SportHub.Shared.DTOs.Members
+@using SportHub.Shared.DTOs.Payments
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.IPaymentsApiClient PaymentsApi
+@inject SportHub.Web.Services.Api.IMembershipPlansApiClient PlansApi
+@inject SportHub.Web.Services.Api.IMemberSubscriptionsApiClient MemberSubscriptionsApi
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject SportHub.Web.State.AuthSessionState SessionState
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+@inject Microsoft.Extensions.Logging.ILogger<CheckoutSubscriptions> Logger
+
+<PageTitle>Checkout</PageTitle>
+
+<div class="container mt-5">
+    <div class="row">
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Abonnement Checkout</h5>
+                </div>
+
+                <div class="card-body">
+
+                    @if (paymentProcessing)
+                    {
+                        <div class="alert alert-info d-flex align-items-center gap-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Laden...</span>
+                            </div>
+                            <span>Verwerken van uw abonnement + betaling...</span>
+                        </div>
+                    }
+                    else if (paymentSuccess)
+                    {
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle-fill me-2"></i>Betaling geslaagd!</h5>
+                            <p class="mb-3">Uw abonnement is succesvol geactiveerd.</p>
+                            <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/subscriptions")'>
+                                <i class="bi bi-list-ul me-2"></i>Bekijk mijn abonnementen
+                            </button>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(pageError))
+                    {
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Fout opgetreden</h5>
+                            <p>@pageError</p>
+                            <button class="btn btn-outline-secondary" @onclick="RetryPayment">
+                                Probeer opnieuw
+                            </button>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(paymentError))
+                    {
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-x-circle-fill me-2"></i>Betaling mislukt</h5>
+                            <p>@paymentError</p>
+                            <button class="btn btn-outline-secondary" @onclick="RetryPayment">
+                                Probeer opnieuw
+                            </button>
+                        </div>
+                    }
+                    else if (selectedPlan == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border"></div>
+                            <p class="text-muted mt-2">Plan laden...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Betaalmethode</h6>
+                                <p>
+                                    <strong>Stripe (test)</strong><br />
+                                    <span class="text-muted small">School-simulatie: geen echt geld.</span>
+                                </p>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Geselecteerd abonnement</h6>
+                                <p class="mb-1"><strong>@selectedPlan.Name</strong></p>
+                                <p class="mb-0 text-muted">€@selectedPlan.Price.ToString("F2") per @selectedPlan.PeriodType</p>
+                            </div>
+                        </div>
+
+                        @if (!isAuthenticated)
+                        {
+                            <div class="alert alert-warning">
+                                Log in om te betalen.
+                            </div>
+                        }
+                        else if (string.IsNullOrWhiteSpace(currentMemberId))
+                        {
+                            <div class="alert alert-warning">
+                                Kan je lid-ID niet vinden in je sessie.
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="btn btn-success w-100 btn-lg" @onclick="ProcessPayment">
+                                <i class="bi bi-lock-fill me-2"></i>
+                                Betalen — €@selectedPlan.Price.ToString("F2")
+                            </button>
+                        }
+
+                        <p class="text-muted text-center mt-3 small">
+                            Je abonnement wordt aangemaakt en geactiveerd na een geslaagde betaling.
+                        </p>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light border-0">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">Samenvatting</h6>
+                </div>
+
+                <div class="card-body">
+                    @if (selectedPlan != null)
+                    {
+                        <p><strong>Plan:</strong> @selectedPlan.Name</p>
+                        <p><strong>Periode:</strong> @selectedPlan.PeriodType</p>
+
+                        @if (!string.IsNullOrWhiteSpace(selectedPlan.Description))
+                        {
+                            <p class="text-muted small">@selectedPlan.Description</p>
+                        }
+
+                        @if (selectedPlan.SessionsPerWeekLimit.HasValue)
+                        {
+                            <p><strong>Sessies per week:</strong> @selectedPlan.SessionsPerWeekLimit</p>
+                        }
+
+                        <hr />
+                        <p class="mb-0 fs-5">
+                            <strong>Totaal: €@selectedPlan.Price.ToString("F2")</strong>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Laden...</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private MembershipPlanDto? selectedPlan;
+
+    private bool isAuthenticated = false;
+    private string? currentMemberId;
+
+    private bool paymentProcessing = false;
+    private bool paymentSuccess = false;
+    private string paymentError = "";
+    private string? pageError;
+
+    private Guid planId = Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+
+        await LoadCurrentMemberFromAuthState();
+
+        if (!isAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+
+        if (Guid.TryParse(queryParams["planId"], out var pid))
+        {
+            planId = pid;
+        }
+
+        await LoadPlan();
+    }
+
+    private async Task LoadCurrentMemberFromAuthState()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            isAuthenticated = user?.Identity?.IsAuthenticated == true;
+            currentMemberId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load member from auth state.");
+        }
+    }
+
+    private async Task LoadPlan()
+    {
+        try
+        {
+            var plans = await PlansApi.GetAllAsync();
+            selectedPlan = planId != Guid.Empty
+                ? plans.FirstOrDefault(p => p.Id == planId)
+                : plans.FirstOrDefault();
+
+            if (selectedPlan == null)
+                pageError = "Geen abonnement gevonden voor dit plan-ID.";
+        }
+        catch (HttpRequestException ex)
+        {
+            selectedPlan = null;
+            pageError = $"Kon plan niet laden. ({(int?)ex.StatusCode})";
+        }
+        catch (Exception ex)
+        {
+            selectedPlan = null;
+            pageError = $"Kon plan niet laden: {ex.Message}";
+        }
+    }
+
+    private async Task ProcessPayment()
+    {
+        paymentProcessing = true;
+        paymentError = "";
+        pageError = null;
+        paymentSuccess = false;
+
+        try
+        {
+            if (selectedPlan == null)
+                throw new InvalidOperationException("Plan niet geselecteerd.");
+
+            if (!isAuthenticated || string.IsNullOrWhiteSpace(currentMemberId))
+                throw new InvalidOperationException("Log in om te betalen.");
+
+            if (!Guid.TryParse(currentMemberId, out var memberIdGuid))
+                throw new InvalidOperationException("Ongeldig lid-ID.");
+            
+            var checkout =
+                await PaymentsApi.CreateCheckoutSessionAsync(
+                    new CreateStripePaymentIntentRequestDto
+                        {
+                            MemberId = memberIdGuid,
+                            SubscriptionId = null,
+                            Amount = selectedPlan.Price,
+                            Currency = "eur"
+                        });
+
+            Navigation.NavigateTo(
+                $"{checkout.CheckoutUrl}?planId={selectedPlan.Id}",
+                true);
+        }
+        catch (Exception ex)
+        {
+            paymentError = ex.Message;
+        }
+        finally
+        {
+            paymentProcessing = false;
+        }
+    }
+
+    private void RetryPayment()
+    {
+        paymentError = "";
+        pageError = null;
+        paymentSuccess = false;
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

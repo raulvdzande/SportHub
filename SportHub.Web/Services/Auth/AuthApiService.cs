@@ -34,7 +34,6 @@ public class AuthApiService : IAuthApiService
         }
         catch
         {
-            // Treat network/CORS/TLS errors as login failure in UI instead of crashing rendering.
             return null;
         }
 
@@ -56,6 +55,51 @@ public class AuthApiService : IAuthApiService
             {
                 provider.NotifyAuthenticationChanged();
             }
+            return payload;
+        }
+    }
+
+    public async Task<LoginMemberResponseDto?> LoginMemberAsync(LoginMemberRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("ApiAnonymous");
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsJsonAsync("api/auth/login-member", request, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<LoginMemberResponseDto>(cancellationToken);
+            if (payload is null)
+            {
+                return null;
+            }
+
+            var user = new StaffUserDto
+            {
+                Id = payload.MemberId,
+                Email = request.Email,
+                DisplayName = request.Email
+            };
+
+            _sessionState.SetSession(payload.AccessToken, user);
+            await _storage.SetItemAsync(TokenStorageKey, payload.AccessToken);
+            await _storage.SetItemAsync(UserStorageKey, JsonSerializer.Serialize(user));
+            if (_authenticationStateProvider is ApiAuthenticationStateProvider provider)
+            {
+                provider.NotifyAuthenticationChanged();
+            }
+
             return payload;
         }
     }

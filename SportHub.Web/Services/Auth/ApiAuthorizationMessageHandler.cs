@@ -29,7 +29,6 @@ public class ApiAuthorizationMessageHandler : DelegatingHandler
         var accessToken = _sessionState.AccessToken;
         if (string.IsNullOrWhiteSpace(accessToken))
         {
-            // Fallback to persisted token to avoid timing issues right after login/restore.
             accessToken = await _storage.GetItemAsync(TokenStorageKey);
         }
 
@@ -39,16 +38,19 @@ public class ApiAuthorizationMessageHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken);
+
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && _sessionState.IsAuthenticated)
         {
-            // Clear persisted session when API rejects the token so the app can recover cleanly.
-            _sessionState.ClearSession();
-            await _storage.RemoveItemAsync(TokenStorageKey);
-            await _storage.RemoveItemAsync(UserStorageKey);
-            if (_authenticationStateProvider is ApiAuthenticationStateProvider provider)
+            _ = Task.Run(async () =>
             {
-                provider.NotifyAuthenticationChanged();
-            }
+                _sessionState.ClearSession();
+                await _storage.RemoveItemAsync(TokenStorageKey);
+                await _storage.RemoveItemAsync(UserStorageKey);
+                if (_authenticationStateProvider is ApiAuthenticationStateProvider provider)
+                {
+                    provider.NotifyAuthenticationChanged();
+                }
+            }, CancellationToken.None);
         }
 
         return response;

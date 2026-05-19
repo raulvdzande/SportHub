@@ -1,0 +1,163 @@
+@page "/admin/occupancy"
+@using SportHub.Shared.DTOs.Locations
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.ILessonsApiClient LessonsApiClient
+@inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApiClient
+@inject SportHub.Web.Services.Api.ILocationsApiClient LocationsApiClient
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApiClient
+
+<PageTitle>Bezettingsoverzicht</PageTitle>
+
+<h1>Bezettingsoverzicht Lessen</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="date" class="form-control" @bind="fromDate" />
+            <span class="input-group-text">tot</span>
+            <input type="date" class="form-control" @bind="toDate" />
+            <button class="btn btn-outline-primary" @onclick="LoadOccupancy">Laad</button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Bezetting per Les</h5>
+    </div>
+    <div class="card-body">
+        @if (occupancy == null)
+        {
+            <p>Laden...</p>
+        }
+        else if (!occupancy.Any())
+        {
+            <p>Geen lessen in dit bereik.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Lesnaam</th>
+                        <th>Datum/Tijd</th>
+                        <th>Locatie</th>
+                        <th>Instructeur</th>
+                        <th>Capaciteit</th>
+                        <th>Gereserveerd</th>
+                        <th>Wachtlijst</th>
+                        <th>Aanwezig</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in occupancy)
+                    {
+                        var percentage = item.Capacity > 0 ? (item.ReservedCount * 100) / item.Capacity : 0;
+                        <tr>
+                            <td>@item.LessonName</td>
+                            <td>@item.StartTimeLocal.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>@item.LocationName</td>
+                            <td>@item.InstructorName</td>
+                            <td>@item.Capacity</td>
+                            <td>@item.ReservedCount</td>
+                            <td>@item.WaitlistCount</td>
+                            <td>@item.AttendedCount</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" style="width: @percentage%">@percentage%</div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private DateTime fromDate = DateTime.Today.AddDays(-30);
+    private DateTime toDate = DateTime.Today.AddDays(30);
+    private List<OccupancyRow>? occupancy;
+    private List<WorkoutDto> workouts = new();
+    private List<LocationDto> locations = new();
+    private List<InstructorDto> instructors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+
+        workouts = (await WorkoutsApiClient.GetAllAsync()).ToList();
+        locations = (await LocationsApiClient.GetAllAsync()).ToList();
+        instructors = (await InstructorsApiClient.GetAllAsync()).ToList();
+
+        await LoadOccupancy();
+    }
+
+    private async Task LoadOccupancy()
+    {
+        var lessons = await LessonsApiClient.GetByRangeAsync(
+            DateTime.SpecifyKind(fromDate.Date, DateTimeKind.Local).ToUniversalTime(),
+            DateTime.SpecifyKind(toDate.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Local).ToUniversalTime());
+
+        occupancy = lessons
+            .OrderBy(x => x.StartTimeUtc)
+            .Select(x => new OccupancyRow
+            {
+                Id = x.Id,
+                LessonName = GetWorkoutName(x.WorkoutId),
+                StartTimeLocal = x.StartTimeUtc.ToLocalTime(),
+                LocationName = GetLocationName(x.LocationId),
+                InstructorName = GetInstructorName(x.InstructorId, x.IsInstructorTbd),
+                Capacity = x.CapacityOverride ?? 0,
+                ReservedCount = 0,
+                WaitlistCount = 0,
+                AttendedCount = 0
+            })
+            .ToList();
+    }
+
+    private string GetWorkoutName(Guid workoutId)
+        => workouts.FirstOrDefault(x => x.Id == workoutId)?.Name ?? "Onbekende workout";
+
+    private string GetLocationName(Guid locationId)
+        => locations.FirstOrDefault(x => x.Id == locationId)?.Name ?? "Onbekende locatie";
+
+    private string GetInstructorName(Guid? instructorId, bool isInstructorTbd)
+    {
+        if (isInstructorTbd)
+        {
+            return "NNB";
+        }
+
+        if (!instructorId.HasValue)
+        {
+            return "-";
+        }
+
+        return instructors.FirstOrDefault(x => x.Id == instructorId.Value)?.FullName ?? "Onbekende instructeur";
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+
+    private sealed class OccupancyRow
+    {
+        public Guid Id { get; set; }
+        public string LessonName { get; set; } = string.Empty;
+        public DateTime StartTimeLocal { get; set; }
+        public string LocationName { get; set; } = string.Empty;
+        public string InstructorName { get; set; } = string.Empty;
+        public int Capacity { get; set; }
+        public int ReservedCount { get; set; }
+        public int WaitlistCount { get; set; }
+        public int AttendedCount { get; set; }
+    }
+}

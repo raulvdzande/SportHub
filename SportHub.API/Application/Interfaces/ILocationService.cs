@@ -1,4 +1,4 @@
-﻿using SportHub.Shared.DTOs.Locations;
+using SportHub.Shared.DTOs.Locations;
 
 namespace SportHub.API.Application.Interfaces;
 

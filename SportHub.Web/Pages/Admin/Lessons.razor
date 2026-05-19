@@ -1,0 +1,318 @@
+﻿@page "/admin/lessons"
+@using SportHub.Shared.DTOs.Lessons
+@using SportHub.Shared.DTOs.Locations
+@implements IDisposable
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.ILessonsApiClient LessonsApiClient
+@inject SportHub.Web.Services.Api.IWorkoutsApiClient WorkoutsApiClient
+@inject SportHub.Web.Services.Api.ILocationsApiClient LocationsApiClient
+@inject SportHub.Web.Services.Api.IInstructorsApiClient InstructorsApiClient
+@inject NavigationManager Navigation
+
+<PageTitle>Lessen Plannen</PageTitle>
+
+<h1>Lessen Beheer</h1>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <button class="btn @(activeTab == "new" ? "btn-primary" : "btn-outline-primary")" @onclick='() => SetTab("new")'>
+        Nieuwe Les
+    </button>
+    <button class="btn @(activeTab == "recurring" ? "btn-primary" : "btn-outline-primary")" @onclick='() => SetTab("recurring")'>
+        Herhalende Lessen
+    </button>
+    <button class="btn @(activeTab == "list" ? "btn-primary" : "btn-outline-primary")" @onclick='() => SetTab("list")'>
+        Alle Lessen
+    </button>
+</div>
+
+@if (activeTab == "new")
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Maak een nieuwe les aan</h5>
+        </div>
+        <div class="card-body">
+            @if (!locations.Any())
+            {
+                <div class="alert alert-warning">
+                    Er zijn nog geen locaties. Voeg eerst een locatie toe via de locatiespagina.
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Workout / Lesnaam</label>
+                    <select class="form-control" @bind="newLesson.WorkoutId">
+                        <option value="@Guid.Empty">-- Kies een workout --</option>
+                        @foreach (var workout in workouts)
+                        {
+                            <option value="@workout.Id">@workout.Name</option>
+                        }
+                    </select>
+                    <div class="form-text">
+                        De naam van de les wordt automatisch de naam van de gekozen workout.
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Locatie</label>
+                    <select class="form-control" @bind="newLesson.LocationId">
+                        <option value="@Guid.Empty">-- Kies een locatie --</option>
+                        @foreach (var location in locations)
+                        {
+                            <option value="@location.Id">@location.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Instructeur</label>
+                    <select class="form-control" @bind="newLesson.InstructorId">
+                        <option value="">-- Geen instructeur (nnb) --</option>
+                        @foreach (var instructor in instructors.Where(x => x.IsActive))
+                        {
+                            <option value="@instructor.Id">@instructor.FullName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Startdatum/tijd</label>
+                    <input type="datetime-local" class="form-control" @bind="startDateTime" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Duur (minuten)</label>
+                    <input type="number" class="form-control" min="1" @bind="newLesson.DurationMinutes" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Capaciteit</label>
+                    <input type="number" class="form-control" min="1" @bind="newLesson.CapacityOverride" />
+                </div>
+            </div>
+
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" @bind="newLesson.IsInstructorTbd" id="tbd" />
+                <label class="form-check-label" for="tbd">Instructeur nog niet bepaald (nnb)</label>
+            </div>
+
+            @if (newLesson.WorkoutId != Guid.Empty)
+            {
+                <div class="alert alert-info">
+                    Deze les krijgt als naam: <strong>@GetWorkoutName(newLesson.WorkoutId)</strong>
+                </div>
+            }
+
+            <button class="btn btn-primary" @onclick="CreateLesson" disabled="@(!CanCreateLesson)">
+                Maak les aan
+            </button>
+        </div>
+    </div>
+}
+else if (activeTab == "recurring")
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Herhalende lessen</h5>
+        </div>
+        <div class="card-body">
+            <p>Gebruik hiervoor de aparte pagina voor herhalende lessen.</p>
+            <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/admin/recurring-lessons")'>
+                Open herhalende lessen
+            </button>
+        </div>
+    </div>
+}
+else if (activeTab == "list")
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Geplande Lessen</h5>
+        </div>
+        <div class="card-body">
+            @if (lessons == null)
+            {
+                <p>Laden...</p>
+            }
+            else if (!lessons.Any())
+            {
+                <p>Geen lessen gepland.</p>
+            }
+            else
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Lesnaam</th>
+                            <th>Datum/Tijd</th>
+                            <th>Locatie</th>
+                            <th>Instructeur</th>
+                            <th>Duur</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lesson in lessons)
+                        {
+                            <tr>
+                                <td>@GetWorkoutName(lesson.WorkoutId)</td>
+                                <td>@lesson.StartTimeUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td>@GetLocationName(lesson.LocationId)</td>
+                                <td>@GetInstructorName(lesson.InstructorId, lesson.IsInstructorTbd)</td>
+                                <td>@lesson.DurationMinutes min</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteLesson(lesson.Id)">Verwijder</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<LessonDto>? lessons = new();
+    private List<WorkoutDto> workouts = new();
+    private List<LocationDto> locations = new();
+    private List<InstructorDto> instructors = new();
+    private CreateLessonRequestDto newLesson = new()
+    {
+        DurationMinutes = 60
+    };
+    private DateTime startDateTime = DateTime.Now;
+    private string activeTab = "new";
+    private string? successMessage;
+    private string? errorMessage;
+
+    private bool CanCreateLesson =>
+        newLesson.WorkoutId != Guid.Empty &&
+        newLesson.LocationId != Guid.Empty &&
+        newLesson.DurationMinutes > 0 &&
+        locations.Any();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+        await ReloadAllData();
+    }
+
+    private async Task ReloadAllData()
+    {
+        workouts = (await WorkoutsApiClient.GetAllAsync()).ToList();
+        locations = (await LocationsApiClient.GetAllAsync()).ToList();
+        instructors = (await InstructorsApiClient.GetAllAsync()).ToList();
+        await LoadLessons();
+    }
+
+    private async Task LoadLessons()
+    {
+        lessons = (await LessonsApiClient.GetAllAsync())
+            .OrderBy(x => x.StartTimeUtc)
+            .ToList();
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+        successMessage = null;
+        errorMessage = null;
+    }
+
+    private async Task CreateLesson()
+    {
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            if (!CanCreateLesson)
+            {
+                errorMessage = "Vul workout, locatie en duur correct in.";
+                return;
+            }
+
+            newLesson.StartTimeUtc = DateTime.SpecifyKind(startDateTime, DateTimeKind.Local).ToUniversalTime();
+
+            await LessonsApiClient.CreateAsync(newLesson);
+
+            successMessage = $"Les '{GetWorkoutName(newLesson.WorkoutId)}' succesvol toegevoegd.";
+            activeTab = "list";
+
+            newLesson = new CreateLessonRequestDto
+            {
+                DurationMinutes = 60
+            };
+
+            startDateTime = DateTime.Now;
+
+            await LoadLessons();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task DeleteLesson(Guid id)
+    {
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            await LessonsApiClient.DeleteAsync(id);
+            successMessage = "Les verwijderd.";
+            await LoadLessons();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private string GetWorkoutName(Guid workoutId)
+        => workouts.FirstOrDefault(x => x.Id == workoutId)?.Name ?? "Onbekende workout";
+
+    private string GetLocationName(Guid locationId)
+        => locations.FirstOrDefault(x => x.Id == locationId)?.Name ?? "Onbekende locatie";
+
+    private string GetInstructorName(Guid? instructorId, bool isInstructorTbd)
+    {
+        if (isInstructorTbd)
+        {
+            return "NNB";
+        }
+
+        if (!instructorId.HasValue)
+        {
+            return "-";
+        }
+
+        return instructors.FirstOrDefault(x => x.Id == instructorId.Value)?.FullName ?? "Onbekende instructeur";
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}

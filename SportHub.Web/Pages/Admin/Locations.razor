@@ -1,0 +1,164 @@
+﻿@page "/admin/locations"
+@using SportHub.Shared.DTOs.Locations
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject SportHub.Web.Services.Api.ILocationsApiClient LocationsApiClient
+
+<PageTitle>Locaties Beheer</PageTitle>
+
+<h1>Locaties Beheer</h1>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Nieuwe locatie toevoegen</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Naam</label>
+                <input class="form-control" @bind="newLocation.Name" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Capaciteit</label>
+                <input type="number" min="1" class="form-control" @bind="newLocation.Capacity" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Beschrijving</label>
+            <textarea class="form-control" @bind="newLocation.Description"></textarea>
+        </div>
+
+        <div class="form-check mb-3">
+            <input id="isSpinningRoom" type="checkbox" class="form-check-input" @bind="newLocation.IsSpinningRoom" />
+            <label class="form-check-label" for="isSpinningRoom">Is spinning room</label>
+        </div>
+
+        @if (newLocation.IsSpinningRoom)
+        {
+            <div class="mb-3">
+                <label class="form-label">Aantal spinning bikes</label>
+                <input type="number" min="1" class="form-control" @bind="newLocation.SpinningBikeCount" />
+            </div>
+        }
+
+        <div class="form-check mb-3">
+            <input id="isActive" type="checkbox" class="form-check-input" @bind="newLocation.IsActive" />
+            <label class="form-check-label" for="isActive">Actief</label>
+        </div>
+
+        <button class="btn btn-primary" @onclick="CreateLocation">Locatie toevoegen</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Bestaande locaties</h5>
+    </div>
+    <div class="card-body">
+        @if (locations is null)
+        {
+            <p>Laden...</p>
+        }
+        else if (!locations.Any())
+        {
+            <p>Er zijn nog geen locaties toegevoegd.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Naam</th>
+                        <th>Capaciteit</th>
+                        <th>Spinning room</th>
+                        <th>Bikes</th>
+                        <th>Actief</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var location in locations)
+                    {
+                        <tr>
+                            <td>@location.Name</td>
+                            <td>@location.Capacity</td>
+                            <td>@(location.IsSpinningRoom ? "Ja" : "Nee")</td>
+                            <td>@(location.SpinningBikeCount?.ToString() ?? "-")</td>
+                            <td>@(location.IsActive ? "Ja" : "Nee")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<LocationDto>? locations;
+    private CreateLocationRequestDto newLocation = new()
+    {
+        Name = string.Empty,
+        Description = string.Empty,
+        Capacity = 20,
+        IsSpinningRoom = false,
+        SpinningBikeCount = null,
+        IsActive = true
+    };
+
+    private string? successMessage;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLocations();
+    }
+
+    private async Task LoadLocations()
+    {
+        locations = (await LocationsApiClient.GetAllAsync()).ToList();
+    }
+
+    private async Task CreateLocation()
+    {
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            if (!newLocation.IsSpinningRoom)
+            {
+                newLocation.SpinningBikeCount = null;
+            }
+
+            await LocationsApiClient.CreateAsync(newLocation);
+
+            successMessage = "Locatie succesvol toegevoegd.";
+
+            newLocation = new CreateLocationRequestDto
+            {
+                Name = string.Empty,
+                Description = string.Empty,
+                Capacity = 20,
+                IsSpinningRoom = false,
+                SpinningBikeCount = null,
+                IsActive = true
+            };
+
+            await LoadLocations();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

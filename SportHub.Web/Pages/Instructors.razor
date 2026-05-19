@@ -55,9 +55,9 @@ else
 }
 
 @code {
-    private readonly SportHub.Shared.DTOs.Instructors.CreateInstructorRequestDto _model = new();
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? _photo;
-    private List<SportHub.Shared.DTOs.Instructors.InstructorDto>? _instructors;
+    private readonly CreateInstructorRequestDto _model = new();
+    private IBrowserFile? _photo;
+    private List<InstructorDto>? _instructors;
 
     protected override async Task OnInitializedAsync()
     {
@@ -70,14 +70,14 @@ else
         _instructors = (await InstructorsApi.GetAllAsync()).ToList();
     }
 
-    private void OnPhotoChanged(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs args)
+    private void OnPhotoChanged(InputFileChangeEventArgs args)
     {
         _photo = args.File;
     }
 
     private async Task CreateInstructorAsync()
     {
-        await InstructorsApi.CreateAsync(_model.FullName, _photo, _model.IsTbd, _model.IsActive);
+        await InstructorsApi.CreateAsync(_model, _photo);
         _model.FullName = string.Empty;
         _photo = null;
         await LoadInstructorsAsync();

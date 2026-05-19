@@ -34,5 +34,12 @@ builder.Services.AddHttpClient("Api", client =>
 builder.Services.AddScoped<IAuthApiService, AuthApiService>();
 builder.Services.AddScoped<IWorkoutsApiClient, WorkoutsApiClient>();
 builder.Services.AddScoped<IInstructorsApiClient, InstructorsApiClient>();
+builder.Services.AddScoped<ILocationsApiClient, LocationsApiClient>();
+builder.Services.AddScoped<ILessonsApiClient, LessonsApiClient>();
+builder.Services.AddScoped<IMembersApiClient, MembersApiClient>();
+builder.Services.AddScoped<IMembershipPlansApiClient, MembershipPlansApiClient>();
+builder.Services.AddScoped<IAuthMemberApiClient, AuthMemberApiClient>();
+builder.Services.AddScoped<IPaymentsApiClient, PaymentsApiClient>();
+builder.Services.AddScoped<IMemberSubscriptionsApiClient, MemberSubscriptionsApiClient>();
 
 await builder.Build().RunAsync();

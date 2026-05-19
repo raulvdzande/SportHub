@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SportHub.Shared.DTOs.Auth;
 using SportHub.API.Application.Interfaces;
 
@@ -19,6 +19,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request, CancellationToken cancellationToken)
     {
         var result = await _authService.LoginAsync(request, cancellationToken);
+        if (result is null)
+        {
+            return Unauthorized(new { error = "Invalid credentials." });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("login-member")]
+    public async Task<ActionResult<LoginMemberResponseDto>> LoginMember([FromBody] LoginMemberRequestDto request, CancellationToken cancellationToken)
+    {
+        var result = await HttpContext.RequestServices.GetRequiredService<IMemberAuthService>().LoginAsync(request, cancellationToken);
         if (result is null)
         {
             return Unauthorized(new { error = "Invalid credentials." });

@@ -1,4 +1,4 @@
-﻿using SportHub.Shared.DTOs.Auth;
+using SportHub.Shared.DTOs.Auth;
 
 namespace SportHub.API.Application.Interfaces;
 

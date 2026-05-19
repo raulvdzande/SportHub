@@ -112,6 +112,10 @@ namespace SportHub.API.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -123,11 +127,22 @@ namespace SportHub.API.Infrastructure.Data.Migrations
                     b.Property<bool>("IsTbd")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(1024)
                         .HasColumnType("varchar(1024)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Instructors", (string)null);
                 });

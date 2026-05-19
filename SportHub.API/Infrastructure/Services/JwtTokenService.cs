@@ -43,4 +43,36 @@ public class JwtTokenService : IJwtTokenService
 
         return (token, expiresAt);
     }
+
+    public (string AccessToken, DateTime ExpiresAtUtc) GenerateTokenForMember(Member member)
+    {
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.ExpiresMinutes);
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, member.Id.ToString()),
+            new Claim(ClaimTypes.Name, member.FirstName + " " + member.LastName),
+            new Claim(ClaimTypes.Email, member.Email),
+            new Claim("Member", "true")
+        };
+
+        // If member has a username we include it as a claim
+        if (!string.IsNullOrWhiteSpace(member.Username))
+        {
+            claims.Add(new Claim(ClaimTypes.Name, member.Username));
+        }
+
+        var tokenDescriptor = new JwtSecurityToken(
+            issuer: _jwtOptions.Issuer,
+            audience: _jwtOptions.Audience,
+            claims: claims,
+            expires: expiresAt,
+            signingCredentials: credentials);
+
+        var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+
+        return (token, expiresAt);
+    }
 }

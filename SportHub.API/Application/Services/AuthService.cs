@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SportHub.Shared.DTOs.Auth;
 using SportHub.API.Application.Interfaces;

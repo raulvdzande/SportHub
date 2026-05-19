@@ -47,7 +47,11 @@ public class InstructorConfiguration : IEntityTypeConfiguration<Instructor>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.FullName).HasMaxLength(160).IsRequired();
+        builder.Property(x => x.Email).HasMaxLength(255);
+        builder.Property(x => x.PasswordHash).HasMaxLength(512);
+        builder.Property(x => x.PhoneNumber).HasMaxLength(30);
         builder.Property(x => x.PhotoUrl).HasMaxLength(1024);
+        builder.HasIndex(x => x.Email).IsUnique();
     }
 }
 

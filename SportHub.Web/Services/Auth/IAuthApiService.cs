@@ -5,6 +5,7 @@ namespace SportHub.Web.Services.Auth;
 public interface IAuthApiService
 {
     Task<LoginResponseDto?> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default);
+    Task<LoginMemberResponseDto?> LoginMemberAsync(LoginMemberRequestDto request, CancellationToken cancellationToken = default);
     Task LogoutAsync();
 }
 

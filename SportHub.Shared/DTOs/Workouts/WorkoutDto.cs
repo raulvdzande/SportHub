@@ -1,4 +1,4 @@
-﻿namespace SportHub.Shared.DTOs.Workouts;
+namespace SportHub.Shared.DTOs.Workouts;
 
 public class WorkoutDto
 {
@@ -9,4 +9,5 @@ public class WorkoutDto
     public bool IsActive { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 }
+
 

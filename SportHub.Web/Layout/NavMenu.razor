@@ -33,6 +33,34 @@
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="subscriptions">
+                        <span class="bi bi-credit-card-fill" aria-hidden="true"></span> Abonnementen
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/instructors">Admin Instructors</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/members">Admin Members</NavLink>
+                </div>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/locations" Match="NavLinkMatch.All">
+                        <span class="bi bi-geo-alt-nav-menu" aria-hidden="true"></span> Locaties
+                    </NavLink>
+                </li>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/lessons">Admin Lessons</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/recurring-lessons">Recurring Lessons</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/schedule">Schedule</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/occupancy">Occupancy</NavLink>
+                </div>
+                <div class="nav-item px-3">
                     <button class="btn btn-link nav-link" @onclick="LogoutAsync">@Language.T("nav.logout")</button>
                 </div>
             </Authorized>
@@ -40,6 +68,17 @@
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="login">
                         <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @Language.T("nav.login")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="account/register">Register</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="account/login">Member Login</NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="plans">
+                        <span class="bi bi-credit-card-fill" aria-hidden="true"></span> Abonnementen
                     </NavLink>
                 </div>
             </NotAuthorized>

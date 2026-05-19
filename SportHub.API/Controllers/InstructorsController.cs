@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportHub.Shared.DTOs.Instructors;
 using SportHub.API.Application.Interfaces;
@@ -38,11 +38,17 @@ public class InstructorsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<InstructorDto>> Create([FromForm] CreateInstructorRequest request, CancellationToken cancellationToken)
     {
-        var photoUrl = await _photoStorageService.SaveInstructorPhotoAsync(request.Photo, cancellationToken);
+        string? photoUrl = request.Photo is not null
+            ? await _photoStorageService.SaveInstructorPhotoAsync(request.Photo, cancellationToken)
+            : null;
+        photoUrl ??= request.PhotoUrl;
 
         var instructor = await _instructorService.CreateAsync(new CreateInstructorRequestDto
         {
             FullName = request.FullName,
+            Email = request.Email,
+            Password = request.Password,
+            PhoneNumber = request.PhoneNumber,
             PhotoUrl = photoUrl,
             IsTbd = request.IsTbd,
             IsActive = request.IsActive
@@ -56,11 +62,18 @@ public class InstructorsController : ControllerBase
     public async Task<ActionResult<InstructorDto>> Update(Guid id, [FromForm] UpdateInstructorRequest request, CancellationToken cancellationToken)
     {
         var existing = await _instructorService.GetByIdAsync(id, cancellationToken);
-        var photoUrl = await _photoStorageService.SaveInstructorPhotoAsync(request.Photo, cancellationToken) ?? existing.PhotoUrl;
+
+        string? photoUrl = request.Photo is not null
+            ? await _photoStorageService.SaveInstructorPhotoAsync(request.Photo, cancellationToken)
+            : null;
+        photoUrl ??= request.PhotoUrl ?? existing.PhotoUrl;
 
         var instructor = await _instructorService.UpdateAsync(id, new UpdateInstructorRequestDto
         {
             FullName = request.FullName,
+            Email = request.Email,
+            Password = request.Password,
+            PhoneNumber = request.PhoneNumber,
             PhotoUrl = photoUrl,
             IsTbd = request.IsTbd,
             IsActive = request.IsActive

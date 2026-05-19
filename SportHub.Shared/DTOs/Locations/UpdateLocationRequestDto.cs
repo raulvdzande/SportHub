@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace SportHub.Shared.DTOs.Locations;
 
@@ -21,4 +21,5 @@ public class UpdateLocationRequestDto
 
     public bool IsActive { get; set; } = true;
 }
+
 

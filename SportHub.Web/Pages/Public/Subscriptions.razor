@@ -1,0 +1,414 @@
+@page "/subscriptions"
+@implements IDisposable
+@using System.Security.Claims
+@using SportHub.Shared.DTOs.Members
+@using System.ComponentModel.DataAnnotations
+@inject SportHub.Web.Services.Localization.LanguageService Language
+@inject SportHub.Web.Services.Api.IMembershipPlansApiClient PlansApi
+@inject SportHub.Web.Services.Api.IMemberSubscriptionsApiClient? MemberSubscriptionsApi
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Abonnementen</PageTitle>
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Abonnementen</h1>
+            <p class="text-muted mb-0">
+                Kies een abonnement en betaal veilig via Stripe.
+            </p>
+        </div>
+    </div>
+
+    @if (pageError is not null)
+    {
+        <div class="alert alert-danger">
+            @pageError
+        </div>
+    }
+
+    <h3 class="mb-3">Beschikbare abonnementen</h3>
+
+    @if (isLoadingPlans)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border"></div>
+        </div>
+    }
+    else if (plans.Count == 0)
+    {
+        <div class="alert alert-warning">
+            Geen abonnementen beschikbaar.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var plan in plans)
+            {
+                @if (plan is null) { continue; }
+
+                var hasActiveForThisPlan = ActiveSubscriptionByPlanId.ContainsKey(plan.Id);
+
+                <div class="col-lg-4 col-md-6 mb-4" @key="plan.Id">
+                    <div class="card h-100 shadow border-0">
+                        <div class="card-header bg-primary text-white text-center py-3">
+                            <h4 class="mb-0">@(plan.Name ?? string.Empty)</h4>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <div class="text-center mb-4">
+                                <h2 class="text-primary fw-bold">
+                                    €@plan.Price.ToString("F2")
+                                </h2>
+
+                                <div class="text-muted">
+                                    per @(plan.PeriodType ?? string.Empty)
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(plan.Description))
+                            {
+                                <p class="text-muted">
+                                    @plan.Description
+                                </p>
+                            }
+
+                            <hr />
+
+                            <div class="mb-4">
+                                @if (plan.SessionsPerWeekLimit.HasValue)
+                                {
+                                    <div class="mb-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        @plan.SessionsPerWeekLimit sessies per week
+                                    </div>
+                                }
+
+                                <div class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    Toegang tot groepslessen
+                                </div>
+
+                                <div>
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    Support inbegrepen
+                                </div>
+                            </div>
+
+                            <div class="mt-auto">
+                                @if (hasActiveForThisPlan)
+                                {
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                        Actief
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-success w-100"
+                                            @onclick='() => NavigateToCheckout(plan.Id)'>
+                                        <i class="bi bi-lock-fill me-2"></i>
+                                        Betalen via Stripe
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <hr class="my-5" />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            Jouw actieve abonnementen
+        </h3>
+    </div>
+
+    @if (!isAuthenticated)
+    {
+        <div class="alert alert-warning">
+            Log in om je abonnementen te bekijken.
+        </div>
+    }
+    else if (isLoadingSubscriptions)
+    {
+        <div class="text-center py-4">
+            <div class="spinner-border"></div>
+        </div>
+    }
+    else if (memberSubscriptions.Count == 0)
+    {
+        <div class="alert alert-info">
+            Je hebt nog geen actieve abonnementen.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var sub in memberSubscriptions)
+            {
+                @if (sub is null) { continue; }
+
+                <div class="col-md-6 mb-3" @key="sub.Id">
+                    <div class="card border-success shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1">
+                                        @GetPlanName(sub.PlanId)
+                                    </h5>
+
+                                    <div class="text-muted small">
+                                        Status: @(sub.Status ?? "Onbekend")
+                                    </div>
+                                </div>
+
+                                <span class="badge bg-success">
+                                    Actief
+                                </span>
+                            </div>
+
+                            <hr />
+
+                            <div class="mb-2">
+                                <strong>Start:</strong>
+                                @(sub.StartsAtUtc == default
+                                    ? "-"
+                                    : sub.StartsAtUtc.ToString("dd-MM-yyyy"))
+                            </div>
+
+                            <div class="mb-2">
+                                <strong>Einde:</strong>
+                                @(sub.EndsAtUtc == default
+                                    ? "-"
+                                    : sub.EndsAtUtc.ToString("dd-MM-yyyy"))
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>Auto renew:</strong>
+                                @(sub.AutoRenew ? "Ja" : "Nee")
+                            </div>
+
+                            @if (sub.AutoRenew)
+                            {
+                                <button class="btn btn-outline-danger w-100"
+                                        disabled="@isCancelling"
+                                        @onclick="() => CancelSubscription(sub.Id)">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    @(isCancelling ? "Annuleren..." : "Annuleren")
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-success w-100"
+                                        disabled="@isTogglingAutoRenew"
+                                        @onclick="() => EnableAutoRenew(sub.Id)">
+                                    <i class="bi bi-arrow-repeat me-2"></i>
+                                    @(isTogglingAutoRenew ? "Bezig..." : "Hernieuwen")
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code
+{
+    private List<MembershipPlanDto> plans = new();
+    private List<MemberSubscriptionDto> memberSubscriptions = new();
+
+    private Dictionary<Guid, MemberSubscriptionDto> ActiveSubscriptionByPlanId = new();
+
+    private bool isAuthenticated;
+    private string? currentMemberId;
+
+    private bool isLoadingPlans = true;
+    private bool isLoadingSubscriptions = true;
+    private bool isCancelling = false;
+    private bool isTogglingAutoRenew = false;
+
+    private string? pageError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Language.Changed += OnLanguageChanged;
+
+        try
+        {
+            await LoadCurrentMember();
+            await LoadPlans();
+            await LoadSubscriptions();
+        }
+        catch (Exception ex)
+        {
+            pageError = ex.Message;
+        }
+    }
+
+    private async Task LoadPlans()
+    {
+        try
+        {
+            isLoadingPlans = true;
+
+            var result = await PlansApi.GetAllAsync();
+            plans = result?
+                .Where(p => p is not null)
+                .OrderBy(p => p.Price)
+                .ToList() ?? new List<MembershipPlanDto>();
+        }
+        catch
+        {
+            plans = new List<MembershipPlanDto>();
+            pageError = "Abonnementen konden niet worden geladen.";
+        }
+        finally
+        {
+            isLoadingPlans = false;
+        }
+    }
+
+    private async Task LoadSubscriptions()
+    {
+        try
+        {
+            isLoadingSubscriptions = true;
+
+            ActiveSubscriptionByPlanId = new Dictionary<Guid, MemberSubscriptionDto>();
+
+            if (!isAuthenticated ||
+                !Guid.TryParse(currentMemberId, out var memberId) ||
+                MemberSubscriptionsApi is null)
+            {
+                memberSubscriptions = new List<MemberSubscriptionDto>();
+                return;
+            }
+
+            var result = await MemberSubscriptionsApi.GetByMemberAsync(memberId);
+
+            var activeOnly = result?
+                .Where(s => s is not null && string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                .ToList() ?? new List<MemberSubscriptionDto>();
+
+            memberSubscriptions = activeOnly
+                .GroupBy(s => s.PlanId)
+                .Select(g => g.OrderByDescending(x => x.StartsAtUtc).First())
+                .OrderByDescending(x => x.StartsAtUtc)
+                .ToList();
+
+            ActiveSubscriptionByPlanId = memberSubscriptions.ToDictionary(x => x.PlanId, x => x);
+        }
+        catch (Exception ex)
+        {
+            memberSubscriptions = new List<MemberSubscriptionDto>();
+            ActiveSubscriptionByPlanId = new Dictionary<Guid, MemberSubscriptionDto>();
+            pageError = $"Je abonnementen konden niet worden geladen: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingSubscriptions = false;
+        }
+    }
+
+    private async Task CancelSubscription(Guid subscriptionId)
+    {
+        if (MemberSubscriptionsApi is null)
+            return;
+
+        isCancelling = true;
+        pageError = null;
+
+        var sub = memberSubscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (sub is not null)
+        {
+            sub.AutoRenew = false;
+            sub.CancelRequestedAtUtc = DateTime.UtcNow;
+        }
+        StateHasChanged();
+
+        try
+        {
+            await MemberSubscriptionsApi.DisableAutoRenewAsync(subscriptionId);
+        }
+        catch (Exception ex)
+        {
+            if (sub is not null) sub.AutoRenew = true;
+            pageError = $"Annuleren mislukt: {ex.Message}";
+        }
+        finally
+        {
+            isCancelling = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task EnableAutoRenew(Guid subscriptionId)
+    {
+        if (MemberSubscriptionsApi is null)
+            return;
+
+        isTogglingAutoRenew = true;
+        pageError = null;
+
+        var sub = memberSubscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (sub is not null)
+        {
+            sub.AutoRenew = true;
+            sub.CancelRequestedAtUtc = null;
+        }
+        StateHasChanged();
+
+        try
+        {
+            await MemberSubscriptionsApi.EnableAutoRenewAsync(subscriptionId);
+        }
+        catch (Exception ex)
+        {
+            if (sub is not null) sub.AutoRenew = false;
+            pageError = $"Hernieuwen inschakelen mislukt: {ex.Message}";
+        }
+        finally
+        {
+            isTogglingAutoRenew = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCurrentMember()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAuthenticated = user?.Identity?.IsAuthenticated == true;
+        currentMemberId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    private void NavigateToCheckout(Guid planId)
+    {
+        Navigation.NavigateTo($"/checkout?planId={planId}");
+    }
+
+    private string GetPlanName(Guid planId)
+    {
+        return plans.FirstOrDefault(p => p?.Id == planId)?.Name ?? "Onbekend plan";
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Language.Changed -= OnLanguageChanged;
+    }
+}
