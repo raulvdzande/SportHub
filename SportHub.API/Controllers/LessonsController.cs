@@ -31,6 +31,23 @@ public class LessonsController : ControllerBase
         return Ok(item);
     }
 
+    [HttpGet("mobile")]
+    public async Task<ActionResult<IReadOnlyCollection<MobileLessonSummaryDto>>> GetMobileSchedule(
+        [FromQuery] DateTime fromUtc,
+        [FromQuery] DateTime toUtc,
+        CancellationToken cancellationToken)
+    {
+        var items = await _lessonService.GetMobileScheduleAsync(fromUtc, toUtc, cancellationToken);
+        return Ok(items);
+    }
+
+    [HttpGet("{id:guid}/mobile")]
+    public async Task<ActionResult<MobileLessonDetailsDto>> GetMobileDetails(Guid id, CancellationToken cancellationToken)
+    {
+        var item = await _lessonService.GetMobileDetailsAsync(id, cancellationToken);
+        return Ok(item);
+    }
+
     [HttpPost]
     public async Task<ActionResult<LessonDto>> Create([FromBody] CreateLessonRequestDto request, CancellationToken cancellationToken)
     {

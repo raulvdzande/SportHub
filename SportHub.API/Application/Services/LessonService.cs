@@ -149,6 +149,66 @@ public class LessonService : ILessonService
         };
     }
 
+    public async Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    {
+        var lessons = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(x => x.StartTimeUtc >= fromUtc && x.StartTimeUtc <= toUtc)
+            .Include(x => x.Workout)
+            .Include(x => x.Location)
+            .Include(x => x.Instructor)
+            .Include(x => x.Reservations)
+                .ThenInclude(x => x.Member)
+            .OrderBy(x => x.StartTimeUtc)
+            .ToListAsync(cancellationToken);
+
+        return lessons.Select(MapToMobileSummaryDto).ToList();
+    }
+
+    public async Task<MobileLessonDetailsDto> GetMobileDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var lesson = await _dbContext.Lessons
+            .AsNoTracking()
+            .Include(x => x.Workout)
+            .Include(x => x.Location)
+            .Include(x => x.Instructor)
+            .Include(x => x.Reservations)
+                .ThenInclude(x => x.Member)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException("Lesson not found.");
+
+        var summary = MapToMobileSummaryDto(lesson);
+        return new MobileLessonDetailsDto
+        {
+            Id = summary.Id,
+            WorkoutId = summary.WorkoutId,
+            WorkoutName = summary.WorkoutName,
+            LocationId = summary.LocationId,
+            LocationName = summary.LocationName,
+            InstructorId = summary.InstructorId,
+            InstructorName = summary.InstructorName,
+            StartTimeUtc = summary.StartTimeUtc,
+            DurationMinutes = summary.DurationMinutes,
+            CapacityOverride = summary.CapacityOverride,
+            RegisteredCount = summary.RegisteredCount,
+            IsInstructorTbd = summary.IsInstructorTbd,
+            IsCancelled = summary.IsCancelled,
+            CancellationReason = summary.CancellationReason,
+            Participants = lesson.Reservations
+                .Where(x => x.Status != LessonReservationStatus.Cancelled)
+                .OrderBy(x => x.CreatedAtUtc)
+                .Select(x => new LessonParticipantDto
+                {
+                    MemberId = x.MemberId,
+                    DisplayName = BuildMemberDisplayName(x.Member),
+                    Username = x.Member.Username,
+                    ProfilePhotoUrl = x.Member.ProfilePhotoUrl,
+                    ReservationStatus = x.Status.ToString()
+                })
+                .ToList()
+        };
+    }
+
     private async Task ValidateForeignKeysAsync(Guid workoutId, Guid locationId, Guid? instructorId, Guid? recurrenceRuleId, CancellationToken cancellationToken)
     {
         if (!await _dbContext.Workouts.AnyAsync(x => x.Id == workoutId, cancellationToken))
@@ -335,6 +395,24 @@ public class LessonService : ILessonService
         return new DateTime(target.Year, target.Month, day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
     }
 
+    private static MobileLessonSummaryDto MapToMobileSummaryDto(Lesson x) => new()
+    {
+        Id = x.Id,
+        WorkoutId = x.WorkoutId,
+        WorkoutName = x.Workout.Name,
+        LocationId = x.LocationId,
+        LocationName = x.Location.Name,
+        InstructorId = x.InstructorId,
+        InstructorName = x.IsInstructorTbd ? "NNB" : x.Instructor?.FullName,
+        StartTimeUtc = x.StartTimeUtc,
+        DurationMinutes = x.DurationMinutes,
+        CapacityOverride = x.CapacityOverride,
+        RegisteredCount = x.Reservations.Count(r => r.Status != LessonReservationStatus.Cancelled),
+        IsInstructorTbd = x.IsInstructorTbd,
+        IsCancelled = x.IsCancelled,
+        CancellationReason = x.CancellationReason
+    };
+
     private static LessonDto MapToDto(Lesson x) => new()
     {
         Id = x.Id,
@@ -360,4 +438,14 @@ public class LessonService : ILessonService
         OccurrenceCount = r.OccurrenceCount,
         CreatedAtUtc = r.CreatedAtUtc
     };
+
+    private static string BuildMemberDisplayName(Member member)
+    {
+        if (!string.IsNullOrWhiteSpace(member.Username))
+        {
+            return member.Username;
+        }
+
+        return string.Join(" ", new[] { member.FirstName, member.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
 }

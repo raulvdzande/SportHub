@@ -12,4 +12,6 @@ public interface ILessonService
 
     Task<LessonRecurrenceRuleDto> CreateRecurrenceRuleAsync(CreateLessonRecurrenceRuleRequestDto request, CancellationToken cancellationToken = default);
     Task<GenerateRecurringLessonsResponseDto> GenerateRecurringLessonsAsync(GenerateRecurringLessonsRequestDto request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default);
+    Task<MobileLessonDetailsDto> GetMobileDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 }

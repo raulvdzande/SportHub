@@ -20,7 +20,13 @@ public class LocalPhotoStorageService : IPhotoStorageService
         _environment = environment;
     }
 
-    public async Task<string?> SaveInstructorPhotoAsync(IFormFile? photo, CancellationToken cancellationToken = default)
+    public Task<string?> SaveInstructorPhotoAsync(IFormFile? photo, CancellationToken cancellationToken = default)
+        => SavePhotoAsync(photo, "instructors", cancellationToken);
+
+    public Task<string?> SaveMemberPhotoAsync(IFormFile? photo, CancellationToken cancellationToken = default)
+        => SavePhotoAsync(photo, "members", cancellationToken);
+
+    private async Task<string?> SavePhotoAsync(IFormFile? photo, string folderName, CancellationToken cancellationToken)
     {
         if (photo is null || photo.Length == 0)
         {
@@ -39,7 +45,7 @@ public class LocalPhotoStorageService : IPhotoStorageService
             webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         }
 
-        var uploadFolder = Path.Combine(webRoot, "uploads", "instructors");
+        var uploadFolder = Path.Combine(webRoot, "uploads", folderName);
         Directory.CreateDirectory(uploadFolder);
 
         var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
@@ -48,7 +54,6 @@ public class LocalPhotoStorageService : IPhotoStorageService
         await using var stream = File.Create(fullPath);
         await photo.CopyToAsync(stream, cancellationToken);
 
-        return $"/uploads/instructors/{fileName}";
+        return $"/uploads/{folderName}/{fileName}";
     }
 }
-

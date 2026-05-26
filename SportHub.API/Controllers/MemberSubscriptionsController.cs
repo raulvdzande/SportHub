@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportHub.Shared.DTOs.Members;
 using SportHub.API.Application.Interfaces;
+using SportHub.API.Controllers.Requests;
 
 namespace SportHub.API.Controllers;
 
@@ -34,6 +35,20 @@ public class MemberSubscriptionsController : ControllerBase
     {
         var created = await _subscriptionService.CreateAsync(request, cancellationToken);
         return Ok(created);
+    }
+
+    [HttpPost("upgrade-quote")]
+    public async Task<ActionResult<SubscriptionUpgradeQuoteDto>> GetUpgradeQuote(
+        [FromBody] CreateSubscriptionUpgradeQuoteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _subscriptionService.GetUpgradeQuoteAsync(
+            request.CurrentSubscriptionId,
+            request.TargetPlanId,
+            request.CalculatedAtUtc,
+            cancellationToken);
+
+        return Ok(result);
     }
 
     [HttpPost("{id:guid}/cancel")]

@@ -116,6 +116,57 @@ public class MemberSubscriptionService : IMemberSubscriptionService
         return MapToDto(subscription);
     }
 
+    public async Task<SubscriptionUpgradeQuoteDto> GetUpgradeQuoteAsync(Guid currentSubscriptionId, Guid targetPlanId, DateTime? calculatedAtUtc = null, CancellationToken cancellationToken = default)
+    {
+        var now = calculatedAtUtc ?? DateTime.UtcNow;
+
+        var currentSubscription = await _dbContext.MemberSubscriptions
+            .AsNoTracking()
+            .Include(x => x.Plan)
+            .FirstOrDefaultAsync(x => x.Id == currentSubscriptionId, cancellationToken)
+            ?? throw new KeyNotFoundException("Subscription not found.");
+
+        var targetPlan = await _dbContext.MembershipPlans
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == targetPlanId, cancellationToken)
+            ?? throw new KeyNotFoundException("Membership plan not found.");
+
+        if (!string.Equals(currentSubscription.Plan.Currency, targetPlan.Currency, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Currency mismatch between current subscription and target plan.");
+        }
+
+        var totalDuration = currentSubscription.EndsAtUtc - currentSubscription.StartsAtUtc;
+        var remainingDuration = currentSubscription.EndsAtUtc - now;
+
+        var remainingRatio = 0d;
+        if (totalDuration.TotalSeconds > 0)
+        {
+            remainingRatio = Math.Clamp(remainingDuration.TotalSeconds / totalDuration.TotalSeconds, 0d, 1d);
+        }
+
+        var remainingCredit = Math.Round(currentSubscription.Plan.Price * (decimal)remainingRatio, 2, MidpointRounding.AwayFromZero);
+        var amountToPay = Math.Max(0m, Math.Round(targetPlan.Price - remainingCredit, 2, MidpointRounding.AwayFromZero));
+
+        return new SubscriptionUpgradeQuoteDto
+        {
+            CurrentSubscriptionId = currentSubscription.Id,
+            CurrentPlanId = currentSubscription.PlanId,
+            CurrentPlanName = currentSubscription.Plan.Name,
+            CurrentPlanPrice = currentSubscription.Plan.Price,
+            CurrentSubscriptionEndsAtUtc = currentSubscription.EndsAtUtc,
+            TargetPlanId = targetPlan.Id,
+            TargetPlanName = targetPlan.Name,
+            TargetPlanPrice = targetPlan.Price,
+            RemainingCredit = remainingCredit,
+            AmountToPay = amountToPay,
+            Currency = targetPlan.Currency,
+            RemainingRatio = remainingRatio,
+            RemainingDays = Math.Max(0, (int)Math.Ceiling((currentSubscription.EndsAtUtc - now).TotalDays)),
+            CalculatedAtUtc = now
+        };
+    }
+
     private static MemberSubscriptionDto MapToDto(MemberSubscription x) => new()
     {
         Id = x.Id,

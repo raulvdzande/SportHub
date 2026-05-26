@@ -10,4 +10,5 @@ public interface IMemberSubscriptionService
     Task<MemberSubscriptionDto> CancelAsync(Guid id, CancellationToken cancellationToken = default);
     Task<MemberSubscriptionDto> EnableAutoRenewAsync(Guid id, CancellationToken cancellationToken = default);
     Task<MemberSubscriptionDto> DisableAutoRenewAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<SubscriptionUpgradeQuoteDto> GetUpgradeQuoteAsync(Guid currentSubscriptionId, Guid targetPlanId, DateTime? calculatedAtUtc = null, CancellationToken cancellationToken = default);
 }
