@@ -112,7 +112,11 @@ public class MembersController : ControllerBase
 
     private bool TryGetCurrentMemberId(out Guid memberId)
     {
-        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // Try both the .NET claim URI and the short JWT "sub" claim
+        // (.NET JWT middleware mapping behaviour changed across versions)
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+               ?? User.FindFirstValue("sub")
+               ?? User.FindFirstValue("nameidentifier");
         return Guid.TryParse(raw, out memberId);
     }
 }

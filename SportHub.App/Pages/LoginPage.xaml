@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:SportHub.App.Converters"
+             x:Class="SportHub.App.Pages.LoginPage"
+             Title="Inloggen">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBool" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <VerticalStackLayout Padding="20" Spacing="15" VerticalOptions="Center">
+
+        <Label Text="SportHub Inloggen"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center" />
+
+        <Entry Text="{Binding Email}"
+               Placeholder="Email adres"
+               Keyboard="Email" />
+
+        <Entry Text="{Binding Password}"
+               Placeholder="Wachtwoord"
+               IsPassword="True" />
+
+        <Label Text="{Binding Error}"
+               TextColor="Red"
+               FontSize="12"
+               IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
+
+        <Button Text="Inloggen"
+                Command="{Binding LoginCommand}"
+                BackgroundColor="#007AFF"
+                TextColor="White"
+                CornerRadius="8"
+                Padding="0,12" />
+
+        <Label Text="Nog geen account? Registreer"
+               HorizontalTextAlignment="Center"
+               FontSize="12"
+               TextColor="Gray">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding NavigateRegisterCommand}" />
+            </Label.GestureRecognizers>
+        </Label>
+
+    </VerticalStackLayout>
+</ContentPage>

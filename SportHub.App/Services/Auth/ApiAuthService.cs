@@ -1,5 +1,5 @@
-﻿using System.Net.Http.Json;
-using Microsoft.Extensions.Http;
+﻿using System.Net;
+using System.Net.Http.Json;
 using SportHub.App.Services.Storage;
 using SportHub.App.State;
 using SportHub.Shared.DTOs.Auth;
@@ -13,7 +13,10 @@ public class ApiAuthService : IAuthApiService
     private readonly AppSessionState _sessionState;
     private readonly AppLocalStorage _storage;
 
-    public ApiAuthService(IHttpClientFactory httpClientFactory, AppSessionState sessionState, AppLocalStorage storage)
+    public ApiAuthService(
+        IHttpClientFactory httpClientFactory,
+        AppSessionState sessionState,
+        AppLocalStorage storage)
     {
         _httpClientFactory = httpClientFactory;
         _sessionState = sessionState;
@@ -22,56 +25,87 @@ public class ApiAuthService : IAuthApiService
 
     public async Task<MemberDto?> LoginAsync(LoginMemberRequestDto request, CancellationToken cancellationToken = default)
     {
-        var client = _httpClientFactory.CreateClient("ApiAnonymous");
-        var response = await client.PostAsJsonAsync("api/auth/login-member", request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        try
         {
+            var client = _httpClientFactory.CreateClient("ApiAnonymous");
+
+            var response = await client.PostAsJsonAsync("api/auth/login-member", request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var payload = await response.Content.ReadFromJsonAsync<LoginMemberResponseDto>(cancellationToken);
+
+            if (payload is null)
+                return null;
+
+            _sessionState.SetSession(payload.AccessToken, null);
+            await _storage.SetTokenAsync(payload.AccessToken);
+
+            return await RestoreSessionAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LOGIN ERROR: {ex}");
             return null;
         }
-
-        var payload = await response.Content.ReadFromJsonAsync<LoginMemberResponseDto>(cancellationToken);
-        if (payload is null)
-        {
-            return null;
-        }
-
-        _sessionState.SetSession(payload.AccessToken, null);
-        await _storage.SetTokenAsync(payload.AccessToken);
-
-        var member = await RestoreSessionAsync(cancellationToken);
-        return member;
     }
 
     public async Task<MemberDto?> RestoreSessionAsync(CancellationToken cancellationToken = default)
     {
-        var token = _sessionState.AccessToken;
-        if (string.IsNullOrWhiteSpace(token))
+        try
         {
-            token = await _storage.GetTokenAsync();
+            var token = _sessionState.AccessToken;
+
             if (string.IsNullOrWhiteSpace(token))
             {
+                token = await _storage.GetTokenAsync();
+
+                if (string.IsNullOrWhiteSpace(token))
+                    return null;
+
+                _sessionState.SetSession(token, null);
+            }
+
+            var client = _httpClientFactory.CreateClient("Api");
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await client.GetAsync("api/members/me", cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"HTTP CRASH: {ex}");
                 return null;
             }
 
-            _sessionState.SetSession(token, _sessionState.CurrentMember);
-        }
+            if (response.StatusCode is HttpStatusCode.Unauthorized ||
+                response.StatusCode is HttpStatusCode.Forbidden)
+            {
+                await LogoutAsync();
+                return null;
+            }
 
-        var client = _httpClientFactory.CreateClient("Api");
-        var response = await client.GetAsync("api/members/me", cancellationToken);
-        if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var member = await response.Content.ReadFromJsonAsync<MemberDto>(cancellationToken);
+
+            if (member is null)
+                return null;
+
+            _sessionState.SetSession(token, member);
+            await _storage.SetMemberAsync(member);
+
+            return member;
+        }
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"RESTORE ERROR: {ex}");
             return null;
         }
-
-        var member = await response.Content.ReadFromJsonAsync<MemberDto>(cancellationToken);
-        if (member is null)
-        {
-            return null;
-        }
-
-        _sessionState.SetSession(token, member);
-        await _storage.SetMemberAsync(member);
-        return member;
     }
 
     public async Task LogoutAsync()
@@ -79,5 +113,13 @@ public class ApiAuthService : IAuthApiService
         _sessionState.ClearSession();
         await _storage.RemoveTokenAsync();
         await _storage.RemoveMemberAsync();
+    }
+
+    public async Task<MemberDto> CreateAccountAsync(CreateMemberRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("ApiAnonymous");
+        var response = await client.PostAsJsonAsync("api/members", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MemberDto>(cancellationToken))!;
     }
 }

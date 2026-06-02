@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SportHub.App.ViewModels"
+             xmlns:lessons="clr-namespace:SportHub.Shared.DTOs.Lessons;assembly=SportHub.Shared"
+             x:Class="SportHub.App.Pages.SchedulePage"
+             x:Name="ThisPage"
+             x:DataType="vm:ScheduleViewModel"
+             Title="Rooster">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Week-navigatie (vast bovenaan) -->
+        <VerticalStackLayout Grid.Row="0" Padding="15,10" Spacing="2" BackgroundColor="White">
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
+                <Button Text="◄"
+                        Command="{Binding PreviousWeekCommand}"
+                        BackgroundColor="#E5E5EA"
+                        TextColor="#1C1C1E"
+                        CornerRadius="8"
+                        FontSize="14"
+                        Padding="14,6" />
+                <Label Text="{Binding WeekLabel}"
+                       FontSize="14" FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"
+                       MinimumWidthRequest="160"
+                       HorizontalTextAlignment="Center" />
+                <Button Text="►"
+                        Command="{Binding NextWeekCommand}"
+                        BackgroundColor="#E5E5EA"
+                        TextColor="#1C1C1E"
+                        CornerRadius="8"
+                        FontSize="14"
+                        Padding="14,6" />
+            </HorizontalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="#007AFF"
+                               HorizontalOptions="Center" />
+
+            <Label Text="{Binding Error}"
+                   TextColor="#FF3B30" FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
+        </VerticalStackLayout>
+
+        <!-- Scrollbaar rooster -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="15,5" Spacing="0"
+                                 BindableLayout.ItemsSource="{Binding GroupedLessons}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ScheduleDayGroup">
+
+                        <!-- Dag-header -->
+                        <VerticalStackLayout Margin="0,14,0,4" Spacing="6">
+                            <Label Text="{Binding Date}"
+                                   FontSize="13" FontAttributes="Bold"
+                                   TextColor="#3A3A3C" />
+
+                            <!-- Lessen van deze dag -->
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lessons}" Spacing="6">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="lessons:MobileLessonSummaryDto">
+                                        <Border Padding="12" StrokeShape="RoundRectangle 10"
+                                                BackgroundColor="#F2F2F7" StrokeThickness="0">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.LessonTappedCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+
+                                                <!-- Workout naam -->
+                                                <Label Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding WorkoutName}"
+                                                       FontSize="14" FontAttributes="Bold" />
+
+                                                <!-- Tijd -->
+                                                <Label Grid.Row="0" Grid.Column="1"
+                                                       Text="{Binding StartTimeUtc, StringFormat='{0:HH:mm}'}"
+                                                       FontSize="14" FontAttributes="Bold"
+                                                       TextColor="#007AFF"
+                                                       HorizontalOptions="End" />
+
+                                                <!-- Locatie + instructeur -->
+                                                <Label Grid.Row="1" Grid.ColumnSpan="2"
+                                                       FontSize="12" TextColor="#8E8E93">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding LocationName}" />
+                                                            <Span Text=" · " />
+                                                            <Span Text="{Binding InstructorName}" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+
+                                                <!-- Aanmeldingen + duur -->
+                                                <Label Grid.Row="2" Grid.ColumnSpan="2"
+                                                       FontSize="11" TextColor="#8E8E93" Margin="0,2,0,0">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding RegisteredCount, StringFormat='{0} aangemeld'}" />
+                                                            <Span Text=" · " />
+                                                            <Span Text="{Binding DurationMinutes, StringFormat='{0} min'}" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SportHub.App.Pages.DiagnosticsPage"
+             Title="Diagnostics">
+    <VerticalStackLayout Padding="15" Spacing="10">
+        <Label Text="API Diagnostics" FontSize="18" FontAttributes="Bold" />
+        <Label Text="Base URL:" />
+        <Label x:Name="BaseUrlLabel" Text="unknown" />
+        <Button x:Name="PingButton" Text="Ping API (members/me)" Clicked="OnPingClicked" />
+        <Label x:Name="ResultLabel" Text="" />
+    </VerticalStackLayout>
+</ContentPage>

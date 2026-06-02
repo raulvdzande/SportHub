@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SportHub.App.ViewModels"
+             x:Class="SportHub.App.Pages.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Mijn Profiel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="14">
+
+            <!-- Profielfoto -->
+            <Border HeightRequest="120"
+                    WidthRequest="120"
+                    HorizontalOptions="Center"
+                    BackgroundColor="#E5E5EA"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 60">
+                <Image Source="{Binding PhotoSource}"
+                       Aspect="AspectFill"
+                       HeightRequest="120"
+                       WidthRequest="120" />
+            </Border>
+
+            <!-- Foto-knoppen -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                <Button Text="Galerij"
+                        Command="{Binding PickPhotoCommand}"
+                        BackgroundColor="#007AFF"
+                        TextColor="White"
+                        CornerRadius="8"
+                        FontSize="13"
+                        Padding="15,8" />
+                <Button Text="Camera"
+                        Command="{Binding TakePhotoCommand}"
+                        BackgroundColor="#5856D6"
+                        TextColor="White"
+                        CornerRadius="8"
+                        FontSize="13"
+                        Padding="15,8" />
+            </HorizontalStackLayout>
+
+            <!-- Velden -->
+            <Label Text="Voornaam" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding FirstName}" Placeholder="Voornaam" />
+
+            <Label Text="Achternaam" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding LastName}" Placeholder="Achternaam" />
+
+            <Label Text="Email" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding Email}" Placeholder="Email" Keyboard="Email" IsEnabled="False" />
+
+            <Label Text="Gebruikersnaam (zichtbaar voor anderen)" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding Username}" Placeholder="Gebruikersnaam (optioneel)" />
+
+            <Label Text="Telefoonnummer" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding PhoneNumber}" Placeholder="Telefoonnummer (optioneel)" Keyboard="Telephone" />
+
+            <!-- Statusbericht -->
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="12"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyToBool}}">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding IsSuccess}" Value="True">
+                        <Setter Property="TextColor" Value="#34C759" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding IsSuccess}" Value="False">
+                        <Setter Property="TextColor" Value="#FF3B30" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="#007AFF" />
+
+            <Button Text="Opslaan"
+                    Command="{Binding SaveCommand}"
+                    BackgroundColor="#34C759"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="0,12" />
+
+            <Button Text="Uitloggen"
+                    Command="{Binding LogoutCommand}"
+                    BackgroundColor="#FF3B30"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="0,12" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

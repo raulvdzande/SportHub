@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SportHub.App.ViewModels"
+             xmlns:dto="clr-namespace:SportHub.Shared.DTOs.Members;assembly=SportHub.Shared"
+             x:Class="SportHub.App.Pages.SubscriptionsPage"
+             x:Name="ThisPage"
+             x:DataType="vm:SubscriptionsViewModel"
+             Title="Abonnement">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Toolbar -->
+        <HorizontalStackLayout Grid.Row="0" Padding="15,8"
+                               BackgroundColor="White" HorizontalOptions="End">
+            <Button Text="↻ Vernieuwen"
+                    Command="{Binding RefreshCommand}"
+                    BackgroundColor="#E5E5EA" TextColor="#1C1C1E"
+                    CornerRadius="8" FontSize="13" Padding="12,6" />
+        </HorizontalStackLayout>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="15" Spacing="12">
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="#007AFF" />
+
+                <!-- Statusbericht -->
+                <Label Text="{Binding StatusMessage}"
+                       FontSize="12"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyToBool}}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsSuccess}" Value="True">
+                            <Setter Property="TextColor" Value="#34C759" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsSuccess}" Value="False">
+                            <Setter Property="TextColor" Value="#FF3B30" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+
+                <!-- ── Mijn abonnementen ── -->
+                <Label Text="Mijn Abonnementen" FontSize="17" FontAttributes="Bold" />
+
+                <Label Text="Je hebt nog geen actief abonnement."
+                       FontSize="13" TextColor="Gray"
+                       IsVisible="{Binding HasNoSubscriptions}" />
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding MySubscriptions}" Spacing="8">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SubscriptionDisplayItem">
+                            <Border Padding="14" StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="#F2F2F7" StrokeThickness="0">
+                                <VerticalStackLayout Spacing="5">
+
+                                    <!-- Plan naam + status badge -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding PlanName}"
+                                               FontSize="15" FontAttributes="Bold" />
+                                        <Border Grid.Column="1"
+                                                Padding="8,3" StrokeShape="RoundRectangle 12"
+                                                StrokeThickness="0">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Active">
+                                                    <Setter Property="BackgroundColor" Value="#D1F5D3" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Expired">
+                                                    <Setter Property="BackgroundColor" Value="#FFE5B2" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Cancelled">
+                                                    <Setter Property="BackgroundColor" Value="#FFD5D5" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Label Text="{Binding Status}" FontSize="11" FontAttributes="Bold">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Active">
+                                                        <Setter Property="TextColor" Value="#1E8A2E" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Expired">
+                                                        <Setter Property="TextColor" Value="#B25A00" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Cancelled">
+                                                        <Setter Property="TextColor" Value="#CC0000" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Border>
+                                    </Grid>
+
+                                    <Label Text="{Binding PeriodLabel}" FontSize="12" TextColor="Gray" />
+                                    <Label Text="{Binding SessionsLabel}" FontSize="12" TextColor="Gray" />
+                                    <Label Text="{Binding StartDate, StringFormat='Van: {0}'}" FontSize="12" />
+                                    <Label Text="{Binding EndDate,   StringFormat='Tot: {0}'}" FontSize="12" />
+                                    <Label Text="{Binding AutoRenewLabel}" FontSize="11" TextColor="Gray" />
+
+                                    <!-- Opzeggen (actief + auto-renew aan) -->
+                                    <Button Text="Opzeggen"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.CancelSubscriptionCommand}"
+                                            CommandParameter="{Binding Id}"
+                                            IsVisible="{Binding CanDisableAutoRenew}"
+                                            BackgroundColor="#FF3B30" TextColor="White"
+                                            CornerRadius="8" FontSize="13" Padding="0,10"
+                                            Margin="0,4,0,0" />
+
+                                    <!-- Heractiveren (actief + auto-renew uit → gratis) -->
+                                    <Button Text="Heractiveren (gratis)"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.ReactivateSubscriptionCommand}"
+                                            CommandParameter="{Binding Id}"
+                                            IsVisible="{Binding CanEnableAutoRenew}"
+                                            BackgroundColor="#34C759" TextColor="White"
+                                            CornerRadius="8" FontSize="13" Padding="0,10"
+                                            Margin="0,4,0,0" />
+
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <!-- ── Beschikbare plannen ── -->
+                <Label FontSize="17" FontAttributes="Bold"
+                       IsVisible="{Binding HasAvailablePlans}"
+                       Margin="0,10,0,0">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding HasNoSubscriptions}" Value="True">
+                            <Setter Property="Text" Value="Koop een abonnement" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Label" Binding="{Binding HasNoSubscriptions}" Value="False">
+                            <Setter Property="Text" Value="Upgrade abonnement" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding AvailablePlans}"
+                                     IsVisible="{Binding HasAvailablePlans}"
+                                     Spacing="10">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:MembershipPlanDto">
+                            <Border Padding="14" StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="White" Stroke="#E5E5EA" StrokeThickness="1">
+                                <VerticalStackLayout Spacing="5">
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Name}"
+                                               FontSize="15" FontAttributes="Bold" />
+                                        <Label Grid.Column="1"
+                                               FontSize="15" FontAttributes="Bold" TextColor="#635BFF"
+                                               HorizontalOptions="End">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="€" />
+                                                    <Span Text="{Binding Price, StringFormat='{0:F2}'}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </Grid>
+
+                                    <Label Text="{Binding Description}" FontSize="12" TextColor="Gray"
+                                           IsVisible="{Binding Description, Converter={StaticResource StringNotEmptyToBool}}" />
+
+                                    <!-- Stripe betaalknop -->
+                                    <Button Text="💳 Betalen via Stripe"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.BuyPlanCommand}"
+                                            CommandParameter="{Binding Id}"
+                                            BackgroundColor="#635BFF" TextColor="White"
+                                            CornerRadius="8" FontSize="14" Padding="0,12"
+                                            Margin="0,6,0,0" />
+
+                                    <!-- Upgrade knop (als al actief abonnement) -->
+                                    <Button Text="↑ Upgraden via Stripe"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.UpgradeCommand}"
+                                            CommandParameter="{Binding Id}"
+                                            BackgroundColor="#007AFF" TextColor="White"
+                                            CornerRadius="8" FontSize="13" Padding="0,10"
+                                            IsVisible="{Binding Source={x:Reference ThisPage}, Path=BindingContext.HasSubscriptions}" />
+
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

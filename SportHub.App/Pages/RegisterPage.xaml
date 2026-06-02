@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SportHub.App.Pages.RegisterPage"
+             Title="Registreren">
+
+    <VerticalStackLayout Padding="20" Spacing="12" VerticalOptions="Center">
+
+        <Label Text="Account aanmaken"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center" />
+
+        <Entry Text="{Binding Email}" Placeholder="Email" />
+        <Entry Text="{Binding FirstName}" Placeholder="Voornaam" />
+        <Entry Text="{Binding LastName}" Placeholder="Achternaam" />
+        <Entry Text="{Binding Password}" Placeholder="Wachtwoord" IsPassword="True" />
+
+        <Label Text="{Binding Error}" TextColor="Red" FontSize="12"/>
+
+        <Button Text="Registreren"
+                Command="{Binding RegisterCommand}"
+                BackgroundColor="Green"
+                TextColor="White"/>
+
+    </VerticalStackLayout>
+</ContentPage>

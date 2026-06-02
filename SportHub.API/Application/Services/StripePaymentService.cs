@@ -36,8 +36,8 @@ public class StripePaymentService : IStripePaymentService
             
             Mode = "payment",
 
-            SuccessUrl = $"http://localhost:5003/checkout-success?planId={request.SubscriptionId}",
-            CancelUrl = "http://localhost:5003/checkout-cancel",
+            SuccessUrl = $"sporthub://payment/success?planId={request.SubscriptionId}",
+            CancelUrl  = "sporthub://payment/cancel",
 
             LineItems = new List<SessionLineItemOptions>
             {

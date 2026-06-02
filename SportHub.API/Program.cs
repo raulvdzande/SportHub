@@ -36,6 +36,7 @@ builder.Services.AddScoped<IStripePaymentService, StripePaymentService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPhotoStorageService, LocalPhotoStorageService>();
 builder.Services.AddScoped<StaffUserSeeder>();
+builder.Services.AddScoped<MembershipPlanSeeder>();
 builder.Services.AddScoped<IPasswordHasher<StaffUser>, PasswordHasher<StaffUser>>();
 builder.Services.AddScoped<IPasswordHasher<Member>, PasswordHasher<Member>>();
 builder.Services.AddScoped<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
@@ -96,8 +97,11 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<StaffUserSeeder>();
-    await seeder.SeedAsync();
+    var staffSeeder = scope.ServiceProvider.GetRequiredService<StaffUserSeeder>();
+    await staffSeeder.SeedAsync();
+
+    var planSeeder = scope.ServiceProvider.GetRequiredService<MembershipPlanSeeder>();
+    await planSeeder.SeedAsync();
 }
 
 app.Run();

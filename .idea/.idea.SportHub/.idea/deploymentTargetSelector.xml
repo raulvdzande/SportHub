@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="SportHub.App">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-19T13:56:42.849068Z">
+        <DropdownSelection timestamp="2026-06-02T06:14:09.458159800Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\raulv\.android\avd\Pixel_9_Pro_XL.avd" />

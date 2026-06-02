@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SportHub.App.ViewModels"
+             xmlns:lessons="clr-namespace:SportHub.Shared.DTOs.Lessons;assembly=SportHub.Shared"
+             x:Class="SportHub.App.Pages.LessonDetailsPage"
+             x:DataType="vm:LessonDetailsViewModel"
+             Title="Lesdetails">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="15" Spacing="10">
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="#007AFF" />
+
+            <Label Text="{Binding Error}"
+                   TextColor="#FF3B30" FontSize="12"
+                   IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
+
+            <!-- Geannuleerd banner -->
+            <Border BackgroundColor="#FFE5E5" Padding="10"
+                    StrokeShape="RoundRectangle 8" StrokeThickness="0"
+                    IsVisible="{Binding Details.IsCancelled}">
+                <Label Text="{Binding Details.CancellationReason, StringFormat='Geannuleerd: {0}'}"
+                       TextColor="#FF3B30" FontAttributes="Bold" FontSize="13" />
+            </Border>
+
+            <!-- Workout naam -->
+            <Label Text="{Binding Details.WorkoutName}"
+                   FontSize="22" FontAttributes="Bold" />
+
+            <!-- Details rijen -->
+            <VerticalStackLayout Spacing="8" Padding="0,5">
+
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="⏰" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding Details.StartTimeUtc, StringFormat='{0:HH:mm}'}"
+                           FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding Details.DurationMinutes, StringFormat='({0} min)'}"
+                           FontSize="12" TextColor="Gray" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="📍" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding Details.LocationName}"
+                           FontSize="14" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="👤" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding Details.InstructorName}"
+                           FontSize="14" VerticalOptions="Center"
+                           IsVisible="{Binding Details.IsInstructorTbd, Converter={StaticResource InvertBool}}" />
+                    <Label Text="Instructeur n.v.t."
+                           FontSize="14" TextColor="Gray" VerticalOptions="Center"
+                           IsVisible="{Binding Details.IsInstructorTbd}" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="👥" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding Details.RegisteredCount, StringFormat='Aangemeld: {0}'}"
+                           FontSize="14" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+
+            <!-- Aangemelde leden -->
+            <Label Text="Aangemelde leden"
+                   FontSize="15" FontAttributes="Bold"
+                   Margin="0,10,0,4" />
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Details.Participants}" Spacing="6">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="lessons:LessonParticipantDto">
+                        <Border Padding="10" StrokeShape="RoundRectangle 8"
+                                BackgroundColor="#F2F2F7" StrokeThickness="0">
+                            <HorizontalStackLayout Spacing="10">
+
+                                <!-- Profielfoto cirkel -->
+                                <Border HeightRequest="42" WidthRequest="42"
+                                        StrokeShape="RoundRectangle 21"
+                                        StrokeThickness="0"
+                                        BackgroundColor="#C7C7CC">
+                                    <Image Source="{Binding ProfilePhotoUrl, Converter={StaticResource AbsolutePhotoUrl}}"
+                                           Aspect="AspectFill"
+                                           HeightRequest="42"
+                                           WidthRequest="42" />
+                                </Border>
+
+                                <!-- Naam + status -->
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                                    <Label Text="{Binding DisplayName}"
+                                           FontSize="13" FontAttributes="Bold" />
+                                    <Label Text="{Binding Username, StringFormat='@{0}'}"
+                                           FontSize="11" TextColor="#8E8E93"
+                                           IsVisible="{Binding Username, Converter={StaticResource StringNotEmptyToBool}}" />
+                                    <Label Text="{Binding ReservationStatus}"
+                                           FontSize="11" TextColor="#8E8E93" />
+                                </VerticalStackLayout>
+
+                            </HorizontalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -4,11 +4,15 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:SportHub.App"
-    Title="SportHub.App">
+    xmlns:pages="clr-namespace:SportHub.App.Pages"
+    Title="SportHub">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent Title="Rooster" Icon="calendar" Route="schedule" ContentTemplate="{DataTemplate pages:SchedulePage}" />
+        <ShellContent Title="Profiel" Icon="person" Route="profile" ContentTemplate="{DataTemplate pages:ProfilePage}" />
+        <ShellContent Title="Abonnement" Icon="ticket" Route="subscriptions" ContentTemplate="{DataTemplate pages:SubscriptionsPage}" />
+    </TabBar>
+
+    <ShellContent Title="Login" Route="login" ContentTemplate="{DataTemplate pages:LoginPage}" />
 
 </Shell>
