@@ -26,7 +26,7 @@ public class MemberSubscriptionsApiClient : IMemberSubscriptionsApiClient
     public async Task<IReadOnlyCollection<MemberSubscriptionDto>> GetMySubscriptionsAsync(CancellationToken cancellationToken = default)
     {
         var memberId = _sessionState.CurrentMember?.Id
-            ?? throw new InvalidOperationException("Niet ingelogd — kan abonnementen niet ophalen.");
+            ?? throw new InvalidOperationException("Not logged in — cannot retrieve subscriptions.");
 
         var client = ApiClient;
 
@@ -38,7 +38,7 @@ public class MemberSubscriptionsApiClient : IMemberSubscriptionsApiClient
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogWarning("GetMySubscriptionsAsync {StatusCode}: {Body}", response.StatusCode, body);
             throw new HttpRequestException(
-                $"Abonnementen ophalen mislukt ({(int)response.StatusCode}): {body}");
+                $"Failed to retrieve subscriptions ({(int)response.StatusCode}): {body}");
         }
 
         return await response.Content.ReadFromJsonAsync<IReadOnlyCollection<MemberSubscriptionDto>>(cancellationToken)

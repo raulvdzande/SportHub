@@ -8,11 +8,19 @@
     Title="SportHub">
 
     <TabBar>
-        <ShellContent Title="Rooster" Icon="calendar" Route="schedule" ContentTemplate="{DataTemplate pages:SchedulePage}" />
-        <ShellContent Title="Profiel" Icon="person" Route="profile" ContentTemplate="{DataTemplate pages:ProfilePage}" />
-        <ShellContent Title="Abonnement" Icon="ticket" Route="subscriptions" ContentTemplate="{DataTemplate pages:SubscriptionsPage}" />
+        <ShellContent Title="Schedule" Icon="calendar" Route="schedule" ContentTemplate="{DataTemplate pages:SchedulePage}" />
+        <ShellContent Title="Reservations" Icon="bookmark" Route="reservations" ContentTemplate="{DataTemplate pages:ReservationsPage}" />
+        <ShellContent Title="Notifications" Icon="bell" Route="notifications" ContentTemplate="{DataTemplate pages:NotificationsPage}" />
+        <ShellContent Title="Profile" Icon="person" Route="profile" ContentTemplate="{DataTemplate pages:ProfilePage}" />
+        <ShellContent Title="Subscription" Icon="ticket" Route="subscriptions" ContentTemplate="{DataTemplate pages:SubscriptionsPage}" />
+        <ShellContent x:Name="InstructorLessonsTab" Title="Lessons" Icon="document" Route="instructor-lessons-management" ContentTemplate="{DataTemplate pages:InstructorLessonsManagementPage}" IsVisible="False" />
     </TabBar>
 
     <ShellContent Title="Login" Route="login" ContentTemplate="{DataTemplate pages:LoginPage}" />
+    <ShellContent Title="Instructor Login" Route="instructor-login" ContentTemplate="{DataTemplate pages:InstructorLoginPage}" />
+    <ShellContent Title="Instructor Lessons" Route="instructor-lessons" ContentTemplate="{DataTemplate pages:InstructorLessonListPage}" />
+    <ShellContent Title="Instructor Lesson Details" Route="instructor-lesson-details" ContentTemplate="{DataTemplate pages:InstructorLessonDetailsPage}" />
+    <ShellContent Title="Lesson Details" Route="lesson-details" ContentTemplate="{DataTemplate pages:LessonDetailsPage}" />
+    <ShellContent Title="Check In" Route="check-in" ContentTemplate="{DataTemplate pages:CheckInPage}" />
 
 </Shell>

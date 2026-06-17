@@ -107,7 +107,7 @@ public class SubscriptionsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Fout bij laden: {ex.Message}";
+            StatusMessage = $"Error loading: {ex.Message}";
             IsSuccess = false;
         }
         finally
@@ -116,24 +116,24 @@ public class SubscriptionsViewModel : ViewModelBase
         }
     }
 
-    // ── Annuleren (auto-verlenging uit, abonnement nog actief tot einddatum) ─
+    // ── Cancel (auto-renew off, subscription still active until end date) ─
 
     private async Task CancelSubscriptionAsync(Guid id)
     {
         var item = MySubscriptions.FirstOrDefault(s => s.Id == id);
-        var endDate = item?.EndDate ?? "de einddatum";
+        var endDate = item?.EndDate ?? "the end date";
 
         var ok = await Shell.Current.DisplayAlert(
-            "Abonnement opzeggen",
-            $"Je abonnement blijft actief tot {endDate}. Daarna stopt het automatisch.\n\nJe kunt het altijd nog heractiveren zolang het nog loopt.",
-            "Opzeggen", "Annuleren");
+            "Cancel Subscription",
+            $"Your subscription will remain active until {endDate}. After that, it will stop automatically.\n\nYou can always reactivate it while it's still active.",
+            "Cancel", "Don't Cancel");
         if (!ok) return;
 
         IsBusy = true;
         try
         {
             await _subClient.DisableAutoRenewAsync(id);
-            StatusMessage = $"Opgezegd. Abonnement actief tot {endDate}.";
+            StatusMessage = $"Cancelled. Subscription active until {endDate}.";
             IsSuccess = true;
             await LoadAsync();
         }
@@ -141,24 +141,24 @@ public class SubscriptionsViewModel : ViewModelBase
         finally { IsBusy = false; }
     }
 
-    // ── Heractiveren (gratis, zolang abonnement nog loopt) ────────────────────
+    // ── Reactivate (free, while subscription is still active) ────────────────────
 
     private async Task ReactivateSubscriptionAsync(Guid id)
     {
         var item = MySubscriptions.FirstOrDefault(s => s.Id == id);
-        var endDate = item?.EndDate ?? "de einddatum";
+        var endDate = item?.EndDate ?? "the end date";
 
         var ok = await Shell.Current.DisplayAlert(
-            "Abonnement heractiveren",
-            $"Auto-verlenging wordt ingeschakeld. Na {endDate} wordt je abonnement automatisch verlengd.",
-            "Heractiveren", "Annuleren");
+            "Reactivate Subscription",
+            $"Auto-renewal will be enabled. After {endDate}, your subscription will be automatically renewed.",
+            "Reactivate", "Don't Reactivate");
         if (!ok) return;
 
         IsBusy = true;
         try
         {
             await _subClient.EnableAutoRenewAsync(id);
-            StatusMessage = "Auto-verlenging ingeschakeld!";
+            StatusMessage = "Auto-renewal enabled!";
             IsSuccess = true;
             await LoadAsync();
         }
@@ -166,7 +166,7 @@ public class SubscriptionsViewModel : ViewModelBase
         finally { IsBusy = false; }
     }
 
-    // ── Nieuw abonnement kopen via Stripe ─────────────────────────────────────
+    // ── Buy new subscription via Stripe ─────────────────────────────────────
 
     private async Task StartStripeBuyAsync(Guid planId)
     {
@@ -174,14 +174,14 @@ public class SubscriptionsViewModel : ViewModelBase
         if (plan is null) return;
 
         var memberId = _sessionState.CurrentMember?.Id
-            ?? throw new InvalidOperationException("Niet ingelogd.");
-        var period   = plan.PeriodType == "Monthly" ? "maand" : "jaar";
-        var sessions = plan.SessionsPerWeekLimit.HasValue ? $"{plan.SessionsPerWeekLimit}x per week" : "Onbeperkt";
+            ?? throw new InvalidOperationException("Not logged in.");
+        var period   = plan.PeriodType == "Monthly" ? "month" : "year";
+        var sessions = plan.SessionsPerWeekLimit.HasValue ? $"{plan.SessionsPerWeekLimit}x per week" : "Unlimited";
 
         var ok = await Shell.Current.DisplayAlert(
-            "Abonnement kopen",
-            $"{plan.Name}\n€{plan.Price:F2} / {period}\n{sessions}\n\nJe wordt doorgestuurd naar Stripe om veilig te betalen.",
-            "Betalen", "Annuleren");
+            "Buy Subscription",
+            $"{plan.Name}\n€{plan.Price:F2} / {period}\n{sessions}\n\nYou will be redirected to Stripe for secure payment.",
+            "Pay", "Cancel");
         if (!ok) return;
 
         IsBusy = true;
@@ -200,14 +200,14 @@ public class SubscriptionsViewModel : ViewModelBase
 
             if (session is null || string.IsNullOrWhiteSpace(session.CheckoutUrl))
             {
-                StatusMessage = "Kon Stripe-sessie niet aanmaken. Controleer de server.";
+                StatusMessage = "Could not create Stripe session. Check the server.";
                 IsSuccess = false;
                 IsBusy = false;
                 return;
             }
 
             IsBusy = false;
-            StatusMessage = "Stripe geopend — betaal en keer terug naar de app.";
+            StatusMessage = "Stripe opened — pay and return to the app.";
             IsSuccess = true;
 
             await Browser.Default.OpenAsync(session.CheckoutUrl, BrowserLaunchMode.SystemPreferred);
@@ -219,7 +219,7 @@ public class SubscriptionsViewModel : ViewModelBase
     public async Task OnPaymentSuccessAsync(Guid planId)
     {
         var memberId = _sessionState.CurrentMember?.Id
-            ?? throw new InvalidOperationException("Sessie verlopen — heropen de app en log opnieuw in.");
+            ?? throw new InvalidOperationException("Session expired — reopen the app and log in again.");
         IsBusy = true;
         StatusMessage = string.Empty;
         try
@@ -232,8 +232,8 @@ public class SubscriptionsViewModel : ViewModelBase
             });
 
             StatusMessage = sub is not null
-                ? "Betaling geslaagd! Abonnement is actief."
-                : "Betaling ontvangen maar abonnement aanmaken mislukt. Neem contact op.";
+                ? "Payment successful! Subscription is now active."
+                : "Payment received but subscription creation failed. Please contact support.";
             IsSuccess = sub is not null;
             await LoadAsync();
         }
@@ -260,13 +260,13 @@ public class SubscriptionsViewModel : ViewModelBase
         catch (Exception ex) { SetError(ex); IsBusy = false; return; }
         finally { IsBusy = false; }
 
-        if (quote is null) { StatusMessage = "Kan upgrade niet berekenen."; IsSuccess = false; return; }
+        if (quote is null) { StatusMessage = "Cannot calculate upgrade."; IsSuccess = false; return; }
 
         var plan = AvailablePlans.FirstOrDefault(p => p.Id == targetPlanId);
         var ok = await Shell.Current.DisplayAlert(
-            $"Upgraden naar {quote.TargetPlanName}",
-            $"Resterende credit: €{quote.RemainingCredit:F2}\nNog te betalen: €{quote.AmountToPay:F2}\n({quote.RemainingDays} resterende dagen)",
-            "Betalen via Stripe", "Annuleren");
+            $"Upgrade to {quote.TargetPlanName}",
+            $"Remaining credit: €{quote.RemainingCredit:F2}\nAmount to pay: €{quote.AmountToPay:F2}\n({quote.RemainingDays} days remaining)",
+            "Pay via Stripe", "Cancel");
         if (!ok) return;
 
         var memberId = _sessionState.CurrentMember?.Id ?? Guid.Empty;
@@ -286,14 +286,14 @@ public class SubscriptionsViewModel : ViewModelBase
 
             if (session is null || string.IsNullOrWhiteSpace(session.CheckoutUrl))
             {
-                StatusMessage = "Stripe sessie mislukt.";
+                StatusMessage = "Stripe session failed.";
                 IsSuccess = false;
                 IsBusy = false;
                 return;
             }
 
             IsBusy = false;
-            StatusMessage = "Stripe geopend — betaal en keer terug.";
+            StatusMessage = "Stripe opened — pay and return.";
             IsSuccess = true;
             await Browser.Default.OpenAsync(session.CheckoutUrl, BrowserLaunchMode.SystemPreferred);
         }
@@ -302,7 +302,7 @@ public class SubscriptionsViewModel : ViewModelBase
 
     private void SetError(Exception ex)
     {
-        StatusMessage = $"Fout: {ex.Message}";
+        StatusMessage = $"Error: {ex.Message}";
         IsSuccess = false;
     }
 }

@@ -16,12 +16,14 @@ public class LessonsApiClient : ILessonsApiClient
         _logger = logger;
     }
 
-    public async Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, Guid? instructorId = null, CancellationToken cancellationToken = default)
     {
         var client = _httpClientFactory.CreateClient("Api");
         try
         {
             var url = $"api/lessons/mobile?fromUtc={Uri.EscapeDataString(fromUtc.ToString("O"))}&toUtc={Uri.EscapeDataString(toUtc.ToString("O"))}";
+            if (instructorId.HasValue)
+                url += $"&instructorId={instructorId.Value}";
             var response = await client.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -67,6 +69,69 @@ public class LessonsApiClient : ILessonsApiClient
         {
             _logger.LogError(ex, "Error in GetMobileDetailsAsync for id {Id}", id);
             return null;
+        }
+    }
+
+    public async Task<MobileLessonSummaryDto?> CreateAsync(CreateLessonRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("Api");
+        try
+        {
+            var response = await client.PostAsJsonAsync("api/lessons", request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("CreateAsync returned {StatusCode}", response.StatusCode);
+                throw new HttpRequestException($"Failed to create lesson: {response.StatusCode}", null, response.StatusCode);
+            }
+
+            return await response.Content.ReadFromJsonAsync<MobileLessonSummaryDto>(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CreateAsync");
+            throw;
+        }
+    }
+
+    public async Task<MobileLessonSummaryDto?> UpdateAsync(Guid id, UpdateLessonRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("Api");
+        try
+        {
+            var response = await client.PutAsJsonAsync($"api/lessons/{id}", request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("UpdateAsync returned {StatusCode} for id {Id}", response.StatusCode, id);
+                throw new HttpRequestException($"Failed to update lesson: {response.StatusCode}", null, response.StatusCode);
+            }
+
+            return await response.Content.ReadFromJsonAsync<MobileLessonSummaryDto>(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in UpdateAsync for id {Id}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("Api");
+        try
+        {
+            var response = await client.DeleteAsync($"api/lessons/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("DeleteAsync returned {StatusCode} for id {Id}", response.StatusCode, id);
+                throw new HttpRequestException($"Failed to delete lesson: {response.StatusCode}", null, response.StatusCode);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DeleteAsync for id {Id}", id);
+            throw;
         }
     }
 }

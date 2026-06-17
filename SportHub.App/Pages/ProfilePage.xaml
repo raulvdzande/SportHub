@@ -4,12 +4,12 @@
              xmlns:vm="clr-namespace:SportHub.App.ViewModels"
              x:Class="SportHub.App.Pages.ProfilePage"
              x:DataType="vm:ProfileViewModel"
-             Title="Mijn Profiel">
+             Title="My Profile">
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="14">
 
-            <!-- Profielfoto -->
+            <!-- Profile Photo -->
             <Border HeightRequest="120"
                     WidthRequest="120"
                     HorizontalOptions="Center"
@@ -22,9 +22,9 @@
                        WidthRequest="120" />
             </Border>
 
-            <!-- Foto-knoppen -->
+            <!-- Photo Buttons -->
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                <Button Text="Galerij"
+                <Button Text="Gallery"
                         Command="{Binding PickPhotoCommand}"
                         BackgroundColor="#007AFF"
                         TextColor="White"
@@ -40,21 +40,21 @@
                         Padding="15,8" />
             </HorizontalStackLayout>
 
-            <!-- Velden -->
-            <Label Text="Voornaam" FontAttributes="Bold" FontSize="12" />
-            <Entry Text="{Binding FirstName}" Placeholder="Voornaam" />
+            <!-- Fields -->
+            <Label Text="First Name" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding FirstName}" Placeholder="First Name" />
 
-            <Label Text="Achternaam" FontAttributes="Bold" FontSize="12" />
-            <Entry Text="{Binding LastName}" Placeholder="Achternaam" />
+            <Label Text="Last Name" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding LastName}" Placeholder="Last Name" />
 
             <Label Text="Email" FontAttributes="Bold" FontSize="12" />
             <Entry Text="{Binding Email}" Placeholder="Email" Keyboard="Email" IsEnabled="False" />
 
-            <Label Text="Gebruikersnaam (zichtbaar voor anderen)" FontAttributes="Bold" FontSize="12" />
-            <Entry Text="{Binding Username}" Placeholder="Gebruikersnaam (optioneel)" />
+            <Label Text="Username (visible to others)" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding Username}" Placeholder="Username (optional)" />
 
-            <Label Text="Telefoonnummer" FontAttributes="Bold" FontSize="12" />
-            <Entry Text="{Binding PhoneNumber}" Placeholder="Telefoonnummer (optioneel)" Keyboard="Telephone" />
+            <Label Text="Phone Number" FontAttributes="Bold" FontSize="12" />
+            <Entry Text="{Binding PhoneNumber}" Placeholder="Phone Number (optional)" Keyboard="Telephone" />
 
             <!-- Statusbericht -->
             <Label Text="{Binding StatusMessage}"
@@ -74,14 +74,14 @@
                                IsVisible="{Binding IsBusy}"
                                Color="#007AFF" />
 
-            <Button Text="Opslaan"
+            <Button Text="Save"
                     Command="{Binding SaveCommand}"
                     BackgroundColor="#34C759"
                     TextColor="White"
                     CornerRadius="8"
                     Padding="0,12" />
 
-            <Button Text="Uitloggen"
+            <Button Text="Logout"
                     Command="{Binding LogoutCommand}"
                     BackgroundColor="#FF3B30"
                     TextColor="White"

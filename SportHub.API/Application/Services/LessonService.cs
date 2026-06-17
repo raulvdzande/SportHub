@@ -149,11 +149,12 @@ public class LessonService : ILessonService
         };
     }
 
-    public async Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<MobileLessonSummaryDto>> GetMobileScheduleAsync(DateTime fromUtc, DateTime toUtc, Guid? instructorId = null, CancellationToken cancellationToken = default)
     {
         var lessons = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(x => x.StartTimeUtc >= fromUtc && x.StartTimeUtc <= toUtc)
+            .Where(x => x.StartTimeUtc >= fromUtc && x.StartTimeUtc <= toUtc
+                        && (instructorId == null || x.InstructorId == instructorId))
             .Include(x => x.Workout)
             .Include(x => x.Location)
             .Include(x => x.Instructor)
@@ -177,6 +178,12 @@ public class LessonService : ILessonService
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
             ?? throw new KeyNotFoundException("Lesson not found.");
 
+        // Get check-ins for this lesson
+        var checkIns = await _dbContext.CheckIns
+            .AsNoTracking()
+            .Where(x => x.LessonId == id)
+            .ToListAsync(cancellationToken);
+
         var summary = MapToMobileSummaryDto(lesson);
         return new MobileLessonDetailsDto
         {
@@ -197,13 +204,19 @@ public class LessonService : ILessonService
             Participants = lesson.Reservations
                 .Where(x => x.Status != LessonReservationStatus.Cancelled)
                 .OrderBy(x => x.CreatedAtUtc)
-                .Select(x => new LessonParticipantDto
+                .Select(x =>
                 {
-                    MemberId = x.MemberId,
-                    DisplayName = BuildMemberDisplayName(x.Member),
-                    Username = x.Member.Username,
-                    ProfilePhotoUrl = x.Member.ProfilePhotoUrl,
-                    ReservationStatus = x.Status.ToString()
+                    var checkIn = checkIns.FirstOrDefault(c => c.MemberId == x.MemberId);
+                    return new LessonParticipantDto
+                    {
+                        MemberId = x.MemberId,
+                        DisplayName = BuildMemberDisplayName(x.Member),
+                        Username = x.Member.Username,
+                        ProfilePhotoUrl = x.Member.ProfilePhotoUrl,
+                        ReservationStatus = x.Status.ToString(),
+                        HasCheckedIn = checkIn != null,
+                        CheckInMethod = checkIn?.Method.ToString()
+                    };
                 })
                 .ToList()
         };

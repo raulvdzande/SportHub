@@ -7,4 +7,6 @@ public class LessonParticipantDto
     public string? Username { get; set; }
     public string? ProfilePhotoUrl { get; set; }
     public string ReservationStatus { get; set; } = string.Empty;
+    public bool HasCheckedIn { get; set; }
+    public string? CheckInMethod { get; set; }
 }

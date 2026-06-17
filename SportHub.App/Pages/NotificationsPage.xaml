@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SportHub.App.ViewModels"
+             xmlns:notifications="clr-namespace:SportHub.Shared.DTOs.Notifications;assembly=SportHub.Shared"
+             x:Class="SportHub.App.Pages.NotificationsPage"
+             x:DataType="vm:NotificationsViewModel"
+             x:Name="ThisPage"
+             Title="Notifications">
+
+    <Grid RowDefinitions="Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="15,10" Spacing="8" BackgroundColor="White">
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
+                <Button Text="↻ Refresh"
+                        Command="{Binding RefreshCommand}"
+                        BackgroundColor="#007AFF"
+                        TextColor="White"
+                        CornerRadius="8"
+                        FontSize="12" />
+                <Button Text="✓ Mark All Read"
+                        Command="{Binding MarkAllReadCommand}"
+                        BackgroundColor="#34C759"
+                        TextColor="White"
+                        CornerRadius="8"
+                        FontSize="12" />
+            </HorizontalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="#007AFF" />
+
+            <Label Text="{Binding Error}"
+                   TextColor="#FF3B30" FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
+
+            <Label Text="{Binding UnreadCount, StringFormat='{0} unread'}"
+                   FontSize="12" TextColor="#007AFF"
+                   IsVisible="{Binding UnreadCount}" />
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="15,5" Spacing="8">
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Notifications}" Spacing="8">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="notifications:NotificationDto">
+                            <Border Padding="12" StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="#F2F2F7" StrokeThickness="0">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                    <Label Grid.Row="0" Grid.Column="0"
+                                           Text="{Binding Title}"
+                                           FontSize="14" FontAttributes="Bold" />
+                                    <Label Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding IsRead, StringFormat='{0}'}"
+                                           FontSize="11" TextColor="#8E8E93" />
+
+                                    <Label Grid.Row="1" Grid.ColumnSpan="2"
+                                           Text="{Binding Message}"
+                                           FontSize="12" TextColor="#3A3A3C"
+                                           LineBreakMode="WordWrap" />
+
+                                    <Label Grid.Row="2" Grid.ColumnSpan="2"
+                                           Text="{Binding CreatedAtUtc, StringFormat='{0:dd MMM HH:mm}'}"
+                                           FontSize="11" TextColor="#8E8E93" />
+
+                                    <!-- Accept/Decline buttons for waitlist spot offers -->
+                                    <HorizontalStackLayout Grid.Row="3" Grid.ColumnSpan="2"
+                                                          Spacing="8" Margin="0,8,0,0"
+                                                          IsVisible="{Binding Type, Converter={StaticResource IsWaitlistSpot}}">
+                                        <Button Text="✓ Accept"
+                                                Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.AcceptWaitlistSpotCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#34C759"
+                                                TextColor="White"
+                                                CornerRadius="6"
+                                                FontSize="11"
+                                                HorizontalOptions="FillAndExpand"
+                                                Padding="0,6" />
+
+                                        <Button Text="✕ Decline"
+                                                Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.DeclineWaitlistSpotCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#FF3B30"
+                                                TextColor="White"
+                                                CornerRadius="6"
+                                                FontSize="11"
+                                                HorizontalOptions="FillAndExpand"
+                                                Padding="0,6" />
+                                    </HorizontalStackLayout>
+
+                                    <!-- Mark Read button for other notifications -->
+                                    <Button Grid.Row="3" Grid.ColumnSpan="2"
+                                            Text="✓ Mark Read"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.MarkReadCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#007AFF"
+                                            TextColor="White"
+                                            CornerRadius="6"
+                                            FontSize="11"
+                                            Margin="0,8,0,0"
+                                            Padding="0,6"
+                                            IsVisible="{Binding IsRead, Converter={StaticResource InvertBool}}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="You have no notifications."
+                       FontSize="14" TextColor="#8E8E93"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,20" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

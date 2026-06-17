@@ -104,7 +104,7 @@ public class ProfileViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Fout bij laden: {ex.Message}";
+            StatusMessage = $"Error loading profile: {ex.Message}";
             IsSuccess = false;
 
             // Still try to load photo from session cache
@@ -154,14 +154,14 @@ public class ProfileViewModel : ViewModelBase
             var result = await FilePicker.Default.PickAsync(new PickOptions
             {
                 FileTypes = FilePickerFileType.Images,
-                PickerTitle = "Selecteer foto"
+                PickerTitle = "Select photo"
             });
             if (result is null) return;
             await SetPendingPhotoAsync(result.FullPath);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Fout bij selecteren foto: {ex.Message}";
+            StatusMessage = $"Error selecting photo: {ex.Message}";
             IsSuccess = false;
         }
     }
@@ -173,14 +173,14 @@ public class ProfileViewModel : ViewModelBase
             var status = await Permissions.RequestAsync<Permissions.Camera>();
             if (status != PermissionStatus.Granted)
             {
-                StatusMessage = "Camera-toegang geweigerd.";
+                StatusMessage = "Camera access denied.";
                 IsSuccess = false;
                 return;
             }
 
             if (!MediaPicker.Default.IsCaptureSupported)
             {
-                StatusMessage = "Camera niet beschikbaar op dit apparaat.";
+                StatusMessage = "Camera not available on this device.";
                 IsSuccess = false;
                 return;
             }
@@ -191,7 +191,7 @@ public class ProfileViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Fout bij camera: {ex.Message}";
+            StatusMessage = $"Camera error: {ex.Message}";
             IsSuccess = false;
         }
     }
@@ -210,7 +210,7 @@ public class ProfileViewModel : ViewModelBase
         if (IsBusy) return;
         if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
         {
-            StatusMessage = "Voornaam en achternaam zijn verplicht.";
+            StatusMessage = "First name and last name are required.";
             IsSuccess = false;
             return;
         }
@@ -249,18 +249,18 @@ public class ProfileViewModel : ViewModelBase
 
                 _hasPendingPhoto = false;
                 _sessionState.SetSession(_sessionState.AccessToken ?? string.Empty, updated);
-                StatusMessage = "Profiel succesvol opgeslagen!";
+                StatusMessage = "Profile saved successfully!";
                 IsSuccess = true;
             }
             else
             {
-                StatusMessage = "Opslaan mislukt. Controleer je verbinding.";
+                StatusMessage = "Save failed. Check your connection.";
                 IsSuccess = false;
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Fout bij opslaan: {ex.Message}";
+            StatusMessage = $"Error saving profile: {ex.Message}";
             IsSuccess = false;
         }
         finally

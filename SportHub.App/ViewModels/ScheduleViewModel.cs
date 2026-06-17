@@ -84,7 +84,7 @@ public class ScheduleViewModel : ViewModelBase
         }
         catch (TaskCanceledException)
         {
-            Error = "Time-out — controleer netwerk of API-server.";
+            Error = "Time-out — check network or API server.";
         }
         catch (Exception ex)
         {

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:SportHub.App.Converters"
              x:Class="SportHub.App.Pages.LoginPage"
-             Title="Inloggen">
+             Title="Login">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -13,17 +13,17 @@
 
     <VerticalStackLayout Padding="20" Spacing="15" VerticalOptions="Center">
 
-        <Label Text="SportHub Inloggen"
+        <Label Text="SportHub Login"
                FontSize="24"
                FontAttributes="Bold"
                HorizontalTextAlignment="Center" />
 
         <Entry Text="{Binding Email}"
-               Placeholder="Email adres"
+               Placeholder="Email Address"
                Keyboard="Email" />
 
         <Entry Text="{Binding Password}"
-               Placeholder="Wachtwoord"
+               Placeholder="Password"
                IsPassword="True" />
 
         <Label Text="{Binding Error}"
@@ -31,14 +31,14 @@
                FontSize="12"
                IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
 
-        <Button Text="Inloggen"
+        <Button Text="Login"
                 Command="{Binding LoginCommand}"
                 BackgroundColor="#007AFF"
                 TextColor="White"
                 CornerRadius="8"
                 Padding="0,12" />
 
-        <Label Text="Nog geen account? Registreer"
+        <Label Text="Don't have an account? Register"
                HorizontalTextAlignment="Center"
                FontSize="12"
                TextColor="Gray">
@@ -46,6 +46,16 @@
                 <TapGestureRecognizer Command="{Binding NavigateRegisterCommand}" />
             </Label.GestureRecognizers>
         </Label>
+
+        <BoxView HeightRequest="1" BackgroundColor="#E5E5EA" Margin="0,10" />
+
+        <Button Text="🔐 Instructor Login"
+                Clicked="OnInstructorLoginClicked"
+                BackgroundColor="#635BFF"
+                TextColor="White"
+                CornerRadius="8"
+                Padding="0,12"
+                FontSize="12" />
 
     </VerticalStackLayout>
 </ContentPage>

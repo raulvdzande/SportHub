@@ -35,9 +35,10 @@ public class LessonsController : ControllerBase
     public async Task<ActionResult<IReadOnlyCollection<MobileLessonSummaryDto>>> GetMobileSchedule(
         [FromQuery] DateTime fromUtc,
         [FromQuery] DateTime toUtc,
+        [FromQuery] Guid? instructorId,
         CancellationToken cancellationToken)
     {
-        var items = await _lessonService.GetMobileScheduleAsync(fromUtc, toUtc, cancellationToken);
+        var items = await _lessonService.GetMobileScheduleAsync(fromUtc, toUtc, instructorId, cancellationToken);
         return Ok(items);
     }
 

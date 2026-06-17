@@ -8,6 +8,8 @@ public class AppSessionState
 
     public string? AccessToken { get; private set; }
     public MemberDto? CurrentMember { get; private set; }
+    public bool IsInstructor { get; private set; }
+    public Guid? InstructorId { get; private set; }
 
     public bool IsAuthenticated => !string.IsNullOrWhiteSpace(AccessToken);
 
@@ -15,6 +17,17 @@ public class AppSessionState
     {
         AccessToken = accessToken;
         CurrentMember = currentMember;
+        IsInstructor = false;
+        InstructorId = null;
+        Changed?.Invoke();
+    }
+
+    public void SetInstructorSession(string accessToken, Guid instructorId)
+    {
+        AccessToken = accessToken;
+        CurrentMember = null;
+        IsInstructor = true;
+        InstructorId = instructorId;
         Changed?.Invoke();
     }
 
@@ -22,6 +35,8 @@ public class AppSessionState
     {
         AccessToken = null;
         CurrentMember = null;
+        IsInstructor = false;
+        InstructorId = null;
         Changed?.Invoke();
     }
 }

@@ -283,11 +283,20 @@ namespace SportHub.API.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
 
+                    b.Property<double?>("GpsRadiusMeters")
+                        .HasColumnType("double");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsSpinningRoom")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
 
                     b.Property<string>("Name")
                         .IsRequired()

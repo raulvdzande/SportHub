@@ -15,4 +15,17 @@ public partial class LoginPage : ContentPage
         _vm = vm;
         BindingContext = _vm;
     }
+
+    private void OnInstructorLoginClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var app = (App)Application.Current!;
+            app.ShowInstructorLogin();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error navigating to instructor login: {ex}");
+        }
+    }
 }

@@ -6,11 +6,11 @@
              x:Class="SportHub.App.Pages.SchedulePage"
              x:Name="ThisPage"
              x:DataType="vm:ScheduleViewModel"
-             Title="Rooster">
+             Title="Schedule">
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Week-navigatie (vast bovenaan) -->
+        <!-- Week navigation (fixed at top) -->
         <VerticalStackLayout Grid.Row="0" Padding="15,10" Spacing="2" BackgroundColor="White">
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
                 <Button Text="◄"
@@ -46,20 +46,20 @@
                    IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
         </VerticalStackLayout>
 
-        <!-- Scrollbaar rooster -->
+        <!-- Scrollable schedule -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="15,5" Spacing="0"
                                  BindableLayout.ItemsSource="{Binding GroupedLessons}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:ScheduleDayGroup">
 
-                        <!-- Dag-header -->
+                        <!-- Day header -->
                         <VerticalStackLayout Margin="0,14,0,4" Spacing="6">
                             <Label Text="{Binding Date}"
                                    FontSize="13" FontAttributes="Bold"
                                    TextColor="#3A3A3C" />
 
-                            <!-- Lessen van deze dag -->
+                            <!-- Lessons for this day -->
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lessons}" Spacing="6">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="lessons:MobileLessonSummaryDto">
@@ -72,19 +72,19 @@
                                             </Border.GestureRecognizers>
                                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
 
-                                                <!-- Workout naam -->
+                                                <!-- Workout name -->
                                                 <Label Grid.Row="0" Grid.Column="0"
                                                        Text="{Binding WorkoutName}"
                                                        FontSize="14" FontAttributes="Bold" />
 
-                                                <!-- Tijd -->
+                                                <!-- Time -->
                                                 <Label Grid.Row="0" Grid.Column="1"
                                                        Text="{Binding StartTimeUtc, StringFormat='{0:HH:mm}'}"
                                                        FontSize="14" FontAttributes="Bold"
                                                        TextColor="#007AFF"
                                                        HorizontalOptions="End" />
 
-                                                <!-- Locatie + instructeur -->
+                                                <!-- Location + instructor -->
                                                 <Label Grid.Row="1" Grid.ColumnSpan="2"
                                                        FontSize="12" TextColor="#8E8E93">
                                                     <Label.FormattedText>
@@ -96,12 +96,12 @@
                                                     </Label.FormattedText>
                                                 </Label>
 
-                                                <!-- Aanmeldingen + duur -->
+                                                <!-- Registrations + duration -->
                                                 <Label Grid.Row="2" Grid.ColumnSpan="2"
                                                        FontSize="11" TextColor="#8E8E93" Margin="0,2,0,0">
                                                     <Label.FormattedText>
                                                         <FormattedString>
-                                                            <Span Text="{Binding RegisteredCount, StringFormat='{0} aangemeld'}" />
+                                                            <Span Text="{Binding RegisteredCount, StringFormat='{0} registered'}" />
                                                             <Span Text=" · " />
                                                             <Span Text="{Binding DurationMinutes, StringFormat='{0} min'}" />
                                                         </FormattedString>

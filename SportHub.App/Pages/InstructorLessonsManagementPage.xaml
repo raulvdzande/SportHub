@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SportHub.App.Pages.InstructorLessonsManagementPage"
+             Title="Lessons Management">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="20" RowSpacing="12">
+
+        <Button Text="+ New Lesson"
+                Grid.Row="0"
+                Command="{Binding CreateCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}"
+                BackgroundColor="#FF6B6B"
+                TextColor="White"
+                Padding="15"
+                CornerRadius="8"/>
+
+        <Label Text="{Binding Error}"
+               Grid.Row="1"
+               TextColor="Red"
+               IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}"/>
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Grid.Row="2"
+                           Color="#FF6B6B"/>
+
+        <RefreshView Command="{Binding RefreshCommand}"
+                     IsRefreshing="{Binding IsBusy}"
+                     Grid.Row="3">
+            <CollectionView ItemsSource="{Binding Lessons}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="#E0E0E0"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="15"
+                                Margin="0,5">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8">
+
+                                <Label Text="{Binding WorkoutName}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       Grid.Row="0"
+                                       Grid.Column="0"/>
+
+                                <Label Text="{Binding StartTimeUtc, Converter={StaticResource UtcToLocalDate}, ConverterParameter='HH:mm'}"
+                                       FontSize="12"
+                                       TextColor="#666"
+                                       Grid.Row="0"
+                                       Grid.Column="1"
+                                       VerticalTextAlignment="Center"/>
+
+                                <Label Text="{Binding LocationName}"
+                                       FontSize="13"
+                                       TextColor="#555"
+                                       Grid.Row="1"
+                                       Grid.Column="0"/>
+
+                                <Label Text="{Binding StartTimeUtc, Converter={StaticResource UtcToLocalDate}, ConverterParameter='dd MMM yyyy'}"
+                                       FontSize="12"
+                                       TextColor="#666"
+                                       Grid.Row="1"
+                                       Grid.Column="1"
+                                       HorizontalTextAlignment="End"/>
+
+                                <Label Text="{Binding InstructorName}"
+                                       FontSize="12"
+                                       TextColor="#999"
+                                       Grid.Row="2"
+                                       Grid.Column="0"/>
+
+                                <HorizontalStackLayout Grid.Row="2" Grid.Column="1" Spacing="8">
+                                    <Button Text="Edit"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#4CAF50"
+                                            TextColor="White"
+                                            Padding="10,5"
+                                            FontSize="12"
+                                            CornerRadius="5"/>
+                                    <Button Text="Delete"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#FF6B6B"
+                                            TextColor="White"
+                                            Padding="10,5"
+                                            FontSize="12"
+                                            CornerRadius="5"/>
+                                </HorizontalStackLayout>
+
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Label Text="You have no lessons yet. Tap '+ New Lesson' to create one."
+                           FontSize="15"
+                           TextColor="#999"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center"
+                           Margin="0,40"/>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+    </Grid>
+
+</ContentPage>

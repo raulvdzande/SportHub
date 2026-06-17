@@ -57,7 +57,7 @@ public class LoginViewModel : ViewModelBase
 
             if (member is null)
             {
-                Error = "Inloggegevens onjuist";
+                Error = "Invalid login credentials";
                 return;
             }
 

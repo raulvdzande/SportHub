@@ -35,8 +35,15 @@ builder.Services.AddScoped<IMemberSubscriptionService, MemberSubscriptionService
 builder.Services.AddScoped<IStripePaymentService, StripePaymentService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPhotoStorageService, LocalPhotoStorageService>();
+builder.Services.AddScoped<ILessonReservationService, LessonReservationService>();
+builder.Services.AddScoped<ICheckInService, CheckInService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IInstructorAuthService, InstructorAuthService>();
 builder.Services.AddScoped<StaffUserSeeder>();
 builder.Services.AddScoped<MembershipPlanSeeder>();
+builder.Services.AddScoped<TestAccountSeeder>();
+builder.Services.AddScoped<ComprehensiveDataSeeder>();
+builder.Services.AddScoped<WeeklyLessonsSeeder>();
 builder.Services.AddScoped<IPasswordHasher<StaffUser>, PasswordHasher<StaffUser>>();
 builder.Services.AddScoped<IPasswordHasher<Member>, PasswordHasher<Member>>();
 builder.Services.AddScoped<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
@@ -44,7 +51,7 @@ builder.Services.AddScoped<IPasswordHasher<Instructor>, PasswordHasher<Instructo
 // Register email service (console implementation for development)
 builder.Services.AddScoped<SportHub.API.Application.Interfaces.IEmailService, SportHub.API.Infrastructure.Services.ConsoleEmailService>();
 
-// Register member auth service
+// Register auth services
 builder.Services.AddScoped<SportHub.API.Application.Interfaces.IMemberAuthService, SportHub.API.Application.Services.MemberAuthService>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -102,6 +109,15 @@ using (var scope = app.Services.CreateScope())
 
     var planSeeder = scope.ServiceProvider.GetRequiredService<MembershipPlanSeeder>();
     await planSeeder.SeedAsync();
+
+    var testAccountSeeder = scope.ServiceProvider.GetRequiredService<TestAccountSeeder>();
+    await testAccountSeeder.SeedAsync();
+
+    var comprehensiveSeeder = scope.ServiceProvider.GetRequiredService<ComprehensiveDataSeeder>();
+    await comprehensiveSeeder.SeedAsync();
+
+    var weeklySeeder = scope.ServiceProvider.GetRequiredService<WeeklyLessonsSeeder>();
+    await weeklySeeder.SeedAsync();
 }
 
 app.Run();

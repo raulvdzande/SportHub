@@ -30,7 +30,7 @@ public class MembershipPlansApiClient : IMembershipPlansApiClient
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogWarning("GetAllAsync {StatusCode}: {Body}", response.StatusCode, body);
             throw new HttpRequestException(
-                $"Abonnementsplannen ophalen mislukt ({(int)response.StatusCode} {response.StatusCode}): {body}");
+                $"Failed to retrieve subscription plans ({(int)response.StatusCode} {response.StatusCode}): {body}");
         }
 
         return await response.Content.ReadFromJsonAsync<IReadOnlyCollection<MembershipPlanDto>>(cancellationToken);

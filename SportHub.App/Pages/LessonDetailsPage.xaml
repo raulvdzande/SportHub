@@ -3,26 +3,34 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:SportHub.App.ViewModels"
              xmlns:lessons="clr-namespace:SportHub.Shared.DTOs.Lessons;assembly=SportHub.Shared"
+             xmlns:local="clr-namespace:SportHub.App.Pages"
              x:Class="SportHub.App.Pages.LessonDetailsPage"
              x:DataType="vm:LessonDetailsViewModel"
-             Title="Lesdetails">
+             Title="Lesson Details">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="15" Spacing="10">
+    <VerticalStackLayout Padding="15" Spacing="10">
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                               IsVisible="{Binding IsBusy}"
-                               Color="#007AFF" />
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Color="#007AFF" />
 
-            <Label Text="{Binding Error}"
-                   TextColor="#FF3B30" FontSize="12"
-                   IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
+        <Label Text="{Binding Error}"
+               TextColor="#FF3B30" FontSize="12"
+               IsVisible="{Binding Error, Converter={StaticResource StringNotEmptyToBool}}" />
 
-            <!-- Geannuleerd banner -->
-            <Border BackgroundColor="#FFE5E5" Padding="10"
-                    StrokeShape="RoundRectangle 8" StrokeThickness="0"
-                    IsVisible="{Binding Details.IsCancelled}">
-                <Label Text="{Binding Details.CancellationReason, StringFormat='Geannuleerd: {0}'}"
+        <Label Text="{Binding StatusMessage}"
+               TextColor="#34C759" FontSize="12"
+               HorizontalTextAlignment="Center"
+               IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyToBool}}" />
+
+        <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertBool}}">
+            <VerticalStackLayout>
+
+                <!-- Cancelled banner -->
+                <Border BackgroundColor="#FFE5E5" Padding="10"
+                        StrokeShape="RoundRectangle 8" StrokeThickness="0"
+                        IsVisible="{Binding Details.IsCancelled}">
+                <Label Text="{Binding Details.CancellationReason, StringFormat='Cancelled: {0}'}"
                        TextColor="#FF3B30" FontAttributes="Bold" FontSize="13" />
             </Border>
 
@@ -52,32 +60,58 @@
                     <Label Text="{Binding Details.InstructorName}"
                            FontSize="14" VerticalOptions="Center"
                            IsVisible="{Binding Details.IsInstructorTbd, Converter={StaticResource InvertBool}}" />
-                    <Label Text="Instructeur n.v.t."
+                    <Label Text="Instructor TBD"
                            FontSize="14" TextColor="Gray" VerticalOptions="Center"
                            IsVisible="{Binding Details.IsInstructorTbd}" />
                 </HorizontalStackLayout>
 
                 <HorizontalStackLayout Spacing="8">
                     <Label Text="👥" FontSize="14" VerticalOptions="Center" />
-                    <Label Text="{Binding Details.RegisteredCount, StringFormat='Aangemeld: {0}'}"
+                    <Label Text="{Binding Details.RegisteredCount, StringFormat='Registered: {0}'}"
                            FontSize="14" VerticalOptions="Center" />
                 </HorizontalStackLayout>
 
             </VerticalStackLayout>
 
-            <!-- Aangemelde leden -->
-            <Label Text="Aangemelde leden"
-                   FontSize="15" FontAttributes="Bold"
-                   Margin="0,10,0,4" />
+            <!-- Actions -->
+            <VerticalStackLayout Spacing="8" Margin="0,15,0,0">
+                <Button Text="+ Reserve"
+                        Command="{Binding ReserveCommand}"
+                        BackgroundColor="#34C759"
+                        TextColor="White"
+                        CornerRadius="10"
+                        FontSize="14"
+                        Padding="0,12"
+                        IsVisible="{Binding HasCurrentMemberReserved, Converter={StaticResource InvertBool}}" />
 
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Details.Participants}" Spacing="6">
-                <BindableLayout.ItemTemplate>
+                <Button Text="✓ Check In"
+                        Command="{Binding CheckInCommand}"
+                        BackgroundColor="#007AFF"
+                        TextColor="White"
+                        CornerRadius="10"
+                        FontSize="14"
+                        Padding="0,12"
+                        IsVisible="{Binding HasCurrentMemberReserved}" />
+            </VerticalStackLayout>
+
+            <!-- Registered Members Section -->
+            <VerticalStackLayout Margin="0,15,0,4" Spacing="4">
+                <Label Text="Reserved"
+                       FontSize="15" FontAttributes="Bold" />
+                <Label x:Name="CheckInCountLabel"
+                       FontSize="12" TextColor="#8E8E93" />
+            </VerticalStackLayout>
+
+            <!-- All Reserved Members (filtered via code-behind) -->
+            <CollectionView x:Name="ReservedMembersView"
+                           SelectionMode="None">
+                <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="lessons:LessonParticipantDto">
                         <Border Padding="10" StrokeShape="RoundRectangle 8"
                                 BackgroundColor="#F2F2F7" StrokeThickness="0">
                             <HorizontalStackLayout Spacing="10">
 
-                                <!-- Profielfoto cirkel -->
+                                <!-- Profile photo circle -->
                                 <Border HeightRequest="42" WidthRequest="42"
                                         StrokeShape="RoundRectangle 21"
                                         StrokeThickness="0"
@@ -89,22 +123,102 @@
                                 </Border>
 
                                 <!-- Naam + status -->
-                                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="2" HorizontalOptions="FillAndExpand">
                                     <Label Text="{Binding DisplayName}"
                                            FontSize="13" FontAttributes="Bold" />
                                     <Label Text="{Binding Username, StringFormat='@{0}'}"
                                            FontSize="11" TextColor="#8E8E93"
                                            IsVisible="{Binding Username, Converter={StaticResource StringNotEmptyToBool}}" />
-                                    <Label Text="{Binding ReservationStatus}"
-                                           FontSize="11" TextColor="#8E8E93" />
                                 </VerticalStackLayout>
+
+                                <!-- Check-in status -->
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                                    <Label Text="✅"
+                                           FontSize="16"
+                                           HorizontalOptions="Center"
+                                           IsVisible="{Binding HasCheckedIn}" />
+                                    <Label Text="{Binding CheckInMethod, StringFormat='{0}'}"
+                                           FontSize="10" TextColor="#34C759" FontAttributes="Bold"
+                                           HorizontalOptions="Center"
+                                           IsVisible="{Binding HasCheckedIn}" />
+                                </VerticalStackLayout>
+
+                                <!-- Remove button -->
+                                <Button Text="✕"
+                                        BackgroundColor="#FF3B30"
+                                        TextColor="White"
+                                        CornerRadius="8"
+                                        FontSize="14"
+                                        Padding="8"
+                                        WidthRequest="40"
+                                        HeightRequest="40"
+                                        Clicked="OnRemoveParticipantClicked" />
 
                             </HorizontalStackLayout>
                         </Border>
                     </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Waitlist Section -->
+            <VerticalStackLayout Margin="0,15,0,4" Spacing="4">
+                <Label Text="Waitlist"
+                       FontSize="15" FontAttributes="Bold" />
+                <Label x:Name="WaitlistCountLabel"
+                       FontSize="12" TextColor="#8E8E93" />
             </VerticalStackLayout>
 
-        </VerticalStackLayout>
-    </ScrollView>
+            <!-- Waitlist Members -->
+            <CollectionView x:Name="WaitlistMembersView"
+                           SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="lessons:LessonParticipantDto">
+                        <Border Padding="10" StrokeShape="RoundRectangle 8"
+                                BackgroundColor="#FFF3CD" StrokeThickness="1"
+                                Stroke="#FFC107">
+                            <HorizontalStackLayout Spacing="10">
+
+                                <!-- Profile photo circle -->
+                                <Border HeightRequest="42" WidthRequest="42"
+                                        StrokeShape="RoundRectangle 21"
+                                        StrokeThickness="0"
+                                        BackgroundColor="#C7C7CC">
+                                    <Image Source="{Binding ProfilePhotoUrl, Converter={StaticResource AbsolutePhotoUrl}}"
+                                           Aspect="AspectFill"
+                                           HeightRequest="42"
+                                           WidthRequest="42" />
+                                </Border>
+
+                                <!-- Naam + status -->
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="2" HorizontalOptions="FillAndExpand">
+                                    <Label Text="{Binding DisplayName}"
+                                           FontSize="13" FontAttributes="Bold" />
+                                    <Label Text="{Binding Username, StringFormat='@{0}'}"
+                                           FontSize="11" TextColor="#8E8E93"
+                                           IsVisible="{Binding Username, Converter={StaticResource StringNotEmptyToBool}}" />
+                                    <Label Text="On Waitlist"
+                                           FontSize="11" TextColor="#FF9800" FontAttributes="Bold" />
+                                </VerticalStackLayout>
+
+                                <!-- Remove button -->
+                                <Button Text="✕"
+                                        BackgroundColor="#FF3B30"
+                                        TextColor="White"
+                                        CornerRadius="8"
+                                        FontSize="14"
+                                        Padding="8"
+                                        WidthRequest="40"
+                                        HeightRequest="40"
+                                        Clicked="OnRemoveParticipantClicked" />
+
+                            </HorizontalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </VerticalStackLayout>
 </ContentPage>

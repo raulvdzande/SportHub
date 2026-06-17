@@ -29,6 +29,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ILessonsApiClient, LessonsApiClient>();
 		builder.Services.AddSingleton<IMembershipPlansApiClient, MembershipPlansApiClient>();
 		builder.Services.AddSingleton<IStripeApiClient, StripeApiClient>();
+		builder.Services.AddSingleton<IReservationsApiClient, ReservationsApiClient>();
+		builder.Services.AddSingleton<ICheckInsApiClient, CheckInsApiClient>();
+		builder.Services.AddSingleton<INotificationsApiClient, NotificationsApiClient>();
+		builder.Services.AddSingleton<IInstructorAuthApiClient, InstructorAuthApiClient>();
+		builder.Services.AddSingleton<IWorkoutsApiClient, WorkoutsApiClient>();
+		builder.Services.AddSingleton<ILocationsApiClient, LocationsApiClient>();
 
 		builder.Services.AddSingleton<AppShell>(); // ensure AppShell is resolvable
 
@@ -41,6 +47,15 @@ public static class MauiProgram
 		builder.Services.AddTransient<SubscriptionsViewModel>();
 		builder.Services.AddTransient<ScheduleViewModel>();
 		builder.Services.AddTransient<LessonDetailsViewModel>();
+		builder.Services.AddTransient<ReservationsViewModel>();
+		builder.Services.AddTransient<CheckInViewModel>();
+		builder.Services.AddTransient<NotificationsViewModel>();
+		builder.Services.AddTransient<HistoryViewModel>();
+		builder.Services.AddTransient<InstructorLoginViewModel>();
+		builder.Services.AddTransient<InstructorLessonListViewModel>();
+		builder.Services.AddTransient<InstructorLessonDetailsViewModel>();
+		builder.Services.AddTransient<InstructorLessonsManagementViewModel>();
+		builder.Services.AddTransient<InstructorLessonEditViewModel>();
 
 		// Pages
 		builder.Services.AddSingleton<LoginPage>();
@@ -50,6 +65,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SchedulePage>();
 		builder.Services.AddSingleton<LessonDetailsPage>();
 		builder.Services.AddSingleton<DiagnosticsPage>();
+		builder.Services.AddSingleton<ReservationsPage>();
+		builder.Services.AddTransient<CheckInPage>();
+		builder.Services.AddSingleton<NotificationsPage>();
+		builder.Services.AddSingleton<HistoryPage>();
+		builder.Services.AddSingleton<InstructorLoginPage>();
+		builder.Services.AddSingleton<InstructorLessonListPage>();
+		builder.Services.AddTransient<InstructorLessonDetailsPage>();
+		builder.Services.AddTransient<InstructorLessonsManagementPage>();
+		builder.Services.AddTransient<InstructorLessonEditPage>();
 
 		// Determine API base URL per platform to avoid emulator/localhost mismatch
 		string apiBaseUrl;
@@ -70,23 +94,48 @@ public static class MauiProgram
 			apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5099/";
 		}
 
-		// HttpClients with a shorter timeout so the app fails fast
+		// HttpClients with adequate timeout for operations like account creation
 		builder.Services.AddHttpClient("ApiAnonymous", client =>
 		{
 			client.BaseAddress = new Uri(apiBaseUrl);
-			client.Timeout = TimeSpan.FromSeconds(20);
+			client.Timeout = TimeSpan.FromSeconds(30);
 		});
 
 		builder.Services.AddHttpClient("Api", client =>
 		{
 			client.BaseAddress = new Uri(apiBaseUrl);
-			client.Timeout = TimeSpan.FromSeconds(20);
+			client.Timeout = TimeSpan.FromSeconds(30);
 		}).AddHttpMessageHandler<ApiAuthorizationMessageHandler>();
 
 		#if DEBUG
 		builder.Logging.AddDebug();
 		#endif
 
-		return builder.Build();
+		var app = builder.Build();
+		RequestNotificationPermission();
+		return app;
+	}
+
+	private static void RequestNotificationPermission()
+	{
+		try
+		{
+			if (DeviceInfo.Platform == DevicePlatform.Android)
+			{
+				MainThread.BeginInvokeOnMainThread(async () =>
+				{
+					try
+					{
+						var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+						if (status != PermissionStatus.Granted)
+						{
+							await Permissions.RequestAsync<Permissions.PostNotifications>();
+						}
+					}
+					catch { }
+				});
+			}
+		}
+		catch { }
 	}
 }

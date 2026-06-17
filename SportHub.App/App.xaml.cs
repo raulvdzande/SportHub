@@ -18,6 +18,7 @@ public partial class App : Application
     private readonly AppShell _shell;
     private readonly IAuthApiService _authApiService;
     private readonly AppSessionState _sessionState;
+    private readonly IServiceProvider _serviceProvider;
 
     private bool _initialized;
 
@@ -25,7 +26,8 @@ public partial class App : Application
         LoginPage loginPage,
         AppShell shell,
         IAuthApiService authApiService,
-        AppSessionState sessionState)
+        AppSessionState sessionState,
+        IServiceProvider serviceProvider)
     {
         InitializeComponent();
 
@@ -33,6 +35,7 @@ public partial class App : Application
         _shell = shell;
         _authApiService = authApiService;
         _sessionState = sessionState;
+        _serviceProvider = serviceProvider;
 
         _sessionState.Changed += OnSessionChanged;
     }
@@ -90,9 +93,40 @@ public partial class App : Application
             Windows[0].Page = _loginPage;
     }
 
-    private void SetShell()
+    internal void ShowInstructorLogin()
+    {
+        try
+        {
+            var page = _serviceProvider.GetRequiredService<Pages.InstructorLoginPage>();
+            if (Windows.Count > 0)
+                Windows[0].Page = page;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error navigating to instructor login: {ex}");
+        }
+    }
+
+    internal void SetShell()
     {
         if (Windows.Count > 0)
             Windows[0].Page = _shell;
+    }
+
+    internal async Task SetShellAndNavigateToInstructorLessonsAsync()
+    {
+        if (Windows.Count > 0)
+            Windows[0].Page = _shell;
+
+        await Task.Delay(100);
+
+        try
+        {
+            await Shell.Current.GoToAsync("instructor-lessons");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error navigating to instructor lessons: {ex}");
+        }
     }
 }

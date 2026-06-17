@@ -6,6 +6,7 @@ public class AppLocalStorage
 {
     private const string TokenKey = "sporthub.token";
     private const string MemberKey = "sporthub.member";
+    private const string WaitlistNotificationKey = "sporthub.waitlist_notification";
 
     public async Task<string?> GetTokenAsync()
     {
@@ -61,6 +62,24 @@ public class AppLocalStorage
     public Task RemoveMemberAsync()
     {
         Preferences.Remove(MemberKey);
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> GetWaitlistNotificationAsync()
+    {
+        var json = Preferences.Get(WaitlistNotificationKey, string.Empty);
+        return Task.FromResult(string.IsNullOrWhiteSpace(json) ? null : json);
+    }
+
+    public Task SetWaitlistNotificationAsync(string json)
+    {
+        Preferences.Set(WaitlistNotificationKey, json);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveWaitlistNotificationAsync()
+    {
+        Preferences.Remove(WaitlistNotificationKey);
         return Task.CompletedTask;
     }
 }

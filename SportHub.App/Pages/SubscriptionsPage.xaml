@@ -6,14 +6,14 @@
              x:Class="SportHub.App.Pages.SubscriptionsPage"
              x:Name="ThisPage"
              x:DataType="vm:SubscriptionsViewModel"
-             Title="Abonnement">
+             Title="Subscription">
 
     <Grid RowDefinitions="Auto,*">
 
         <!-- Toolbar -->
         <HorizontalStackLayout Grid.Row="0" Padding="15,8"
                                BackgroundColor="White" HorizontalOptions="End">
-            <Button Text="↻ Vernieuwen"
+            <Button Text="↻ Refresh"
                     Command="{Binding RefreshCommand}"
                     BackgroundColor="#E5E5EA" TextColor="#1C1C1E"
                     CornerRadius="8" FontSize="13" Padding="12,6" />
@@ -26,7 +26,7 @@
                                    IsVisible="{Binding IsBusy}"
                                    Color="#007AFF" />
 
-                <!-- Statusbericht -->
+                <!-- Status Message -->
                 <Label Text="{Binding StatusMessage}"
                        FontSize="12"
                        IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyToBool}}">
@@ -40,10 +40,10 @@
                     </Label.Triggers>
                 </Label>
 
-                <!-- ── Mijn abonnementen ── -->
-                <Label Text="Mijn Abonnementen" FontSize="17" FontAttributes="Bold" />
+                <!-- ── My Subscriptions ── -->
+                <Label Text="My Subscriptions" FontSize="17" FontAttributes="Bold" />
 
-                <Label Text="Je hebt nog geen actief abonnement."
+                <Label Text="You don't have an active subscription yet."
                        FontSize="13" TextColor="Gray"
                        IsVisible="{Binding HasNoSubscriptions}" />
 
@@ -95,8 +95,8 @@
                                     <Label Text="{Binding EndDate,   StringFormat='Tot: {0}'}" FontSize="12" />
                                     <Label Text="{Binding AutoRenewLabel}" FontSize="11" TextColor="Gray" />
 
-                                    <!-- Opzeggen (actief + auto-renew aan) -->
-                                    <Button Text="Opzeggen"
+                                    <!-- Cancel (active + auto-renew on) -->
+                                    <Button Text="Cancel"
                                             Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.CancelSubscriptionCommand}"
                                             CommandParameter="{Binding Id}"
                                             IsVisible="{Binding CanDisableAutoRenew}"
@@ -104,8 +104,8 @@
                                             CornerRadius="8" FontSize="13" Padding="0,10"
                                             Margin="0,4,0,0" />
 
-                                    <!-- Heractiveren (actief + auto-renew uit → gratis) -->
-                                    <Button Text="Heractiveren (gratis)"
+                                    <!-- Reactivate (active + auto-renew off → free) -->
+                                    <Button Text="Reactivate (free)"
                                             Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.ReactivateSubscriptionCommand}"
                                             CommandParameter="{Binding Id}"
                                             IsVisible="{Binding CanEnableAutoRenew}"
@@ -119,16 +119,16 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <!-- ── Beschikbare plannen ── -->
+                <!-- ── Available Plans ── -->
                 <Label FontSize="17" FontAttributes="Bold"
                        IsVisible="{Binding HasAvailablePlans}"
                        Margin="0,10,0,0">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding HasNoSubscriptions}" Value="True">
-                            <Setter Property="Text" Value="Koop een abonnement" />
+                            <Setter Property="Text" Value="Buy a subscription" />
                         </DataTrigger>
                         <DataTrigger TargetType="Label" Binding="{Binding HasNoSubscriptions}" Value="False">
-                            <Setter Property="Text" Value="Upgrade abonnement" />
+                            <Setter Property="Text" Value="Upgrade subscription" />
                         </DataTrigger>
                     </Label.Triggers>
                 </Label>
@@ -161,16 +161,16 @@
                                     <Label Text="{Binding Description}" FontSize="12" TextColor="Gray"
                                            IsVisible="{Binding Description, Converter={StaticResource StringNotEmptyToBool}}" />
 
-                                    <!-- Stripe betaalknop -->
-                                    <Button Text="💳 Betalen via Stripe"
+                                    <!-- Stripe Payment Button -->
+                                    <Button Text="💳 Pay via Stripe"
                                             Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.BuyPlanCommand}"
                                             CommandParameter="{Binding Id}"
                                             BackgroundColor="#635BFF" TextColor="White"
                                             CornerRadius="8" FontSize="14" Padding="0,12"
                                             Margin="0,6,0,0" />
 
-                                    <!-- Upgrade knop (als al actief abonnement) -->
-                                    <Button Text="↑ Upgraden via Stripe"
+                                    <!-- Upgrade Button (if already has subscription) -->
+                                    <Button Text="↑ Upgrade via Stripe"
                                             Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.UpgradeCommand}"
                                             CommandParameter="{Binding Id}"
                                             BackgroundColor="#007AFF" TextColor="White"

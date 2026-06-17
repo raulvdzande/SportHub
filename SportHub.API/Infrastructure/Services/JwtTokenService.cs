@@ -75,4 +75,29 @@ public class JwtTokenService : IJwtTokenService
 
         return (token, expiresAt);
     }
+
+    public (string AccessToken, DateTime ExpiresAtUtc) GenerateTokenForInstructor(Instructor instructor)
+    {
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.ExpiresMinutes);
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, instructor.Id.ToString()),
+            new Claim(ClaimTypes.Name, instructor.FullName),
+            new Claim("role", "Instructor")
+        };
+
+        var tokenDescriptor = new JwtSecurityToken(
+            issuer: _jwtOptions.Issuer,
+            audience: _jwtOptions.Audience,
+            claims: claims,
+            expires: expiresAt,
+            signingCredentials: credentials);
+
+        var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+
+        return (token, expiresAt);
+    }
 }

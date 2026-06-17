@@ -61,17 +61,20 @@ public class MemberService : IMemberService
         _dbContext.Members.Add(member);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // Send a basic welcome/confirmation email (development console)
-        var subject = "Welkom bij SportHub - bevestiging registratie";
-        var body = $"<p>Beste {member.FirstName},</p><p>Bedankt voor je aanmelding bij SportHub. Je account is aangemaakt met e-mail {member.Email}.</p>";
-        try
+        // Send email in background (fire and forget) to not block registration
+        _ = Task.Run(async () =>
         {
-            await _emailService.SendEmailAsync(member.Email, subject, body, cancellationToken);
-        }
-        catch
-        {
-            // swallow email errors for now to not block registration
-        }
+            var subject = "Welkom bij SportHub - bevestiging registratie";
+            var body = $"<p>Beste {member.FirstName},</p><p>Bedankt voor je aanmelding bij SportHub. Je account is aangemaakt met e-mail {member.Email}.</p>";
+            try
+            {
+                await _emailService.SendEmailAsync(member.Email, subject, body, CancellationToken.None);
+            }
+            catch
+            {
+                // swallow email errors for now to not block registration
+            }
+        }, CancellationToken.None);
 
         return MapToDto(member);
     }
@@ -117,24 +120,21 @@ public class MemberService : IMemberService
     private async Task EnsureUniqueEmailAndUsernameAsync(string email, string? username, CancellationToken cancellationToken, Guid? excludeId = null)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        if (await _dbContext.Members.AnyAsync(
-                x => x.Email.ToLower() == normalizedEmail && (!excludeId.HasValue || x.Id != excludeId.Value),
-                cancellationToken))
-        {
-            throw new InvalidOperationException("A member with this email already exists.");
-        }
+        var normalizedUser = !string.IsNullOrWhiteSpace(username) ? username.Trim().ToLowerInvariant() : null;
 
-        if (string.IsNullOrWhiteSpace(username))
-        {
-            return;
-        }
+        // Combine into a single query for better performance
+        var existingMember = await _dbContext.Members
+            .Where(x => (!excludeId.HasValue || x.Id != excludeId.Value) &&
+                   (x.Email.ToLower() == normalizedEmail ||
+                    (normalizedUser != null && x.Username != null && x.Username.ToLower() == normalizedUser)))
+            .FirstOrDefaultAsync(cancellationToken);
 
-        var normalizedUser = username.Trim().ToLowerInvariant();
-        if (await _dbContext.Members.AnyAsync(
-                x => x.Username != null && x.Username.ToLower() == normalizedUser && (!excludeId.HasValue || x.Id != excludeId.Value),
-                cancellationToken))
+        if (existingMember != null)
         {
-            throw new InvalidOperationException("A member with this username already exists.");
+            if (existingMember.Email.ToLower() == normalizedEmail)
+                throw new InvalidOperationException("A member with this email already exists.");
+            if (normalizedUser != null && existingMember.Username?.ToLower() == normalizedUser)
+                throw new InvalidOperationException("A member with this username already exists.");
         }
     }
 

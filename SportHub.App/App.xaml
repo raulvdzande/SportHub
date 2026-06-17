@@ -11,6 +11,8 @@
             <converters:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBool" />
             <converters:InvertBoolConverter x:Key="InvertBool" />
             <converters:AbsolutePhotoUrlConverter x:Key="AbsolutePhotoUrl" />
+            <converters:UtcToLocalDateConverter x:Key="UtcToLocalDate" />
+            <converters:IsWaitlistSpotConverter x:Key="IsWaitlistSpot" />
 
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
