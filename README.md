@@ -1,10 +1,10 @@
-# SportHub 🏋️
+# SportHub
 
 A modern fitness gym management platform with mobile app and web dashboard. Members can reserve lessons, check in with GPS/RFID, manage subscriptions, and receive notifications.
 
 ## Features
 
-### 📱 Mobile App (MAUI)
+### Mobile App (MAUI)
 - **Authentication** - Member & instructor login with JWT
 - **Schedule** - Browse available lessons with filters
 - **Reservations** - Reserve/cancel lessons with waitlist support
@@ -17,14 +17,14 @@ A modern fitness gym management platform with mobile app and web dashboard. Memb
 - **Subscriptions** - Stripe payment integration for gym memberships
 - **History** - View past check-ins and attendance
 
-### 🌐 Web Dashboard (Blazor)
+### Web Dashboard (Blazor)
 - **Workout Management** - Create/edit/delete workout types
 - **Location Management** - Manage gym locations
 - **Lesson Management** - Schedule and manage lessons
 - **Member Management** - View and manage members
 - **Instructor Portal** - Instructors can view their lessons
 
-### ⚙️ Backend API (.NET 10)
+### Backend API (.NET 10)
 - RESTful API with JWT authentication
 - Entity Framework Core with MySQL
 - Role-based authorization (Member, Instructor, Staff)
@@ -224,7 +224,7 @@ SportHub/
 ## Payment Integration (Stripe)
 
 ### Test Cards
-- **Success**: `4242 4242 4242 4242` (Visa)
+- **Success**: `4242 4242 4242 4242`
 - **Declined**: `4000 0000 0000 0002`
 - **3D Secure**: `4000 0025 0000 3155`
 
@@ -279,22 +279,6 @@ dotnet ef database update PreviousMigration
 - HTTPS enforced for all API calls
 - CORS configured for web clients
 - Role-based authorization on all endpoints
-
-## Performance
-
-- Lessons seeded for 3 weeks (126+ lessons)
-- Database indexes on frequently queried fields
-- Pagination support on list endpoints
-- Caching for static data (locations, workouts)
-
-## Future Enhancements
-
-- [ ] Payment history dashboard
-- [ ] Advanced lesson filters (difficulty level, class size)
-- [ ] Social features (friend groups, class sharing)
-- [ ] Wearable integration (fitness trackers)
-- [ ] Analytics dashboard for instructors
-- [ ] Automated reminder notifications
 
 ## Contributing
 
