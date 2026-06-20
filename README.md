@@ -186,30 +186,34 @@ GET  /api/checkins/history
 Het project is opgedeeld in vier losse onderdelen:
 
 SportHub.API
-Backend van de applicatie. Bevat de API en alles rondom data en businesslogica.
-Controllers (API endpoints)
-Services (logica)
-Data (DbContext en databaseconfiguratie)
-Models (entiteiten)
-Program.cs (startup en configuratie)
-    
+
+Backend van de applicatie met de API, database en logica.
+
+Controllers – API endpoints
+Services – business logica
+Data – DbContext en databaseconfiguratie
+Models – entiteiten
+Program.cs – startup configuratie
 SportHub.App
-Mobiele applicatie (MAUI).
-Pages (schermen)
-ViewModels (MVVM logica)
-Services (communicatie met API)
-Models (lokale modellen)
 
-    
+Mobiele applicatie gebouwd met .NET MAUI.
+
+Pages – schermen van de app
+ViewModels – MVVM logica
+Services – communicatie met de API
+Models – lokale modellen
 SportHub.Web
-Webdashboard voor beheer.
-Pages (Blazor pagina’s)
-Components (herbruikbare UI componenten)
-Services (API calls en logica)
 
+Webdashboard gebouwd met Blazor.
+
+Pages – webpagina’s
+Components – herbruikbare UI onderdelen
+Services – API calls en logica
 SportHub.Shared
-  Gedeelde code tussen de projecten.
-    DTO’s (data die gedeeld wordt tussen API, app en web)
+
+Gedeelde code tussen de projecten.
+
+DTO’s – data objecten die gedeeld worden tussen API, app en web
 
 ---
 
