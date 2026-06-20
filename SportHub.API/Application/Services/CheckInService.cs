@@ -20,7 +20,6 @@ public class CheckInService : ICheckInService
 
     public async Task<CheckInDto> CreateAsync(Guid memberId, CreateCheckInRequestDto request, CancellationToken cancellationToken = default)
     {
-        // Validate member and lesson exist
         var memberExists = await _dbContext.Members
             .AnyAsync(x => x.Id == memberId, cancellationToken);
 
@@ -42,14 +41,12 @@ public class CheckInService : ICheckInService
             throw new KeyNotFoundException("Lesson not found.");
         }
 
-        // Validate and parse the method enum
         if (!Enum.TryParse<Domain.Enums.CheckInMethod>(request.Method.Trim(), true, out var method))
         {
             _logger.LogWarning("Invalid check-in method: {Method}", request.Method);
             throw new InvalidOperationException("CheckInMethod must be Rfid, Gps, or Manual.");
         }
 
-        // Create the check-in entity
         var checkIn = new CheckIn
         {
             Id = Guid.NewGuid(),
@@ -68,13 +65,11 @@ public class CheckInService : ICheckInService
         _logger.LogInformation("Check-in created: {CheckInId} for Member {MemberId} in Lesson {LessonId}",
             checkIn.Id, memberId, request.LessonId);
 
-        // Return DTO with denormalized lesson info
         return MapToDto(checkIn, lesson, null);
     }
 
     public async Task<IReadOnlyCollection<CheckInDto>> GetByLessonAsync(Guid lessonId, CancellationToken cancellationToken = default)
     {
-        // Verify lesson exists
         var lesson = await _dbContext.Lessons
             .AsNoTracking()
             .Include(x => x.Workout)
@@ -99,7 +94,6 @@ public class CheckInService : ICheckInService
 
     public async Task<IReadOnlyCollection<CheckInDto>> GetMemberHistoryAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
-        // Verify member exists
         var memberExists = await _dbContext.Members
             .AnyAsync(x => x.Id == memberId, cancellationToken);
 

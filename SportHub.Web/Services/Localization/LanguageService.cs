@@ -98,7 +98,7 @@ public class LanguageService
         _storage = storage;
     }
 
-    public string CurrentLanguage { get; private set; } = "nl";
+    public string CurrentLanguage { get; private set; } = "en";
 
     public event Action? Changed;
 

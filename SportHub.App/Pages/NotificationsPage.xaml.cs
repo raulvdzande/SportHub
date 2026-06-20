@@ -55,7 +55,6 @@ public partial class NotificationsPage : ContentPage
 
         if (result)
         {
-            // Create a notification DTO with the ID
             var notificationDto = new Shared.DTOs.Notifications.NotificationDto
             {
                 Id = notification.NotificationId,
@@ -64,7 +63,6 @@ public partial class NotificationsPage : ContentPage
                 Message = $"A spot opened for {notification.WorkoutName}"
             };
 
-            // Accept the waitlist spot
             await _vm.AcceptWaitlistSpotAsync(notificationDto);
         }
 

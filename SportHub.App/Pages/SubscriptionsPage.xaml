@@ -54,7 +54,7 @@
                                     BackgroundColor="#F2F2F7" StrokeThickness="0">
                                 <VerticalStackLayout Spacing="5">
 
-                                    <!-- Plan naam + status badge -->
+                                    <!-- Plan name + status badge -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <Label Grid.Column="0"
                                                Text="{Binding PlanName}"
@@ -91,8 +91,8 @@
 
                                     <Label Text="{Binding PeriodLabel}" FontSize="12" TextColor="Gray" />
                                     <Label Text="{Binding SessionsLabel}" FontSize="12" TextColor="Gray" />
-                                    <Label Text="{Binding StartDate, StringFormat='Van: {0}'}" FontSize="12" />
-                                    <Label Text="{Binding EndDate,   StringFormat='Tot: {0}'}" FontSize="12" />
+                                    <Label Text="{Binding StartDate, StringFormat='From: {0}'}" FontSize="12" />
+                                    <Label Text="{Binding EndDate,   StringFormat='To: {0}'}" FontSize="12" />
                                     <Label Text="{Binding AutoRenewLabel}" FontSize="11" TextColor="Gray" />
 
                                     <!-- Cancel (active + auto-renew on) -->

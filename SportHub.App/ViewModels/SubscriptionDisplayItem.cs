@@ -39,6 +39,6 @@ public class SubscriptionDisplayItem
     public bool CanEnableAutoRenew  => IsActive && !Subscription.AutoRenew;
 
     public string AutoRenewLabel => Subscription.AutoRenew
-        ? "Auto-verlenging: Aan"
-        : "Auto-verlenging: Uit (loopt af op eindatum)";
+        ? "Auto-renewal: On"
+        : "Auto-renewal: Off (expires on the end date)";
 }

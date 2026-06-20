@@ -406,11 +406,11 @@ public class ComprehensiveDataSeeder
         var notifications = new List<Notification>();
         var messages = new[]
         {
-            "Je bent succesvol ingecheck",
-            "Je reservering is bevestigd",
-            "Je staat op de wachtlijst",
-            "Je lidmaatschap is verlengd",
-            "Nieuw programma beschikbaar"
+            "You have successfully checked in",
+            "Your reservation is confirmed",
+            "You are on the waitlist",
+            "Your membership has been renewed",
+            "New programme available"
         };
 
         for (int i = 0; i < members.Count * 5; i++)

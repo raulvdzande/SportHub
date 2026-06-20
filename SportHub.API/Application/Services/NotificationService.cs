@@ -21,19 +21,11 @@ public class NotificationService : INotificationService
 
     public async Task<IReadOnlyCollection<NotificationDto>> GetByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("FETCHING NOTIFICATIONS for member {MemberId}", memberId);
-
         var notifications = await _dbContext.Notifications
             .AsNoTracking()
             .Where(x => x.MemberId == memberId && x.Status == NotificationStatus.Pending)
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
-
-        _logger.LogInformation("FOUND {Count} notifications for member {MemberId}", notifications.Count, memberId);
-        foreach (var n in notifications)
-        {
-            _logger.LogInformation("  - Notification: {NotificationId}, Type={Type}, Status={Status}", n.Id, n.Type, n.Status);
-        }
 
         return notifications.Select(MapToDto).ToList();
     }
@@ -106,22 +98,15 @@ public class NotificationService : INotificationService
 
     public async Task AcceptWaitlistSpotAsync(Guid notificationId, Guid memberId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🔍 AcceptWaitlistSpot START: notificationId={NotificationId}, memberId={MemberId}", notificationId, memberId);
-
         var notification = await _dbContext.Notifications
             .FirstOrDefaultAsync(x => x.Id == notificationId, cancellationToken)
-            ?? throw new KeyNotFoundException($"❌ Notification not found: {notificationId}");
-
-        _logger.LogInformation("✓ Notification found: Type={Type}, LessonId={LessonId}, MemberId={NotifMemberId}, Status={Status}",
-            notification.Type, notification.LessonId, notification.MemberId, notification.Status);
+            ?? throw new KeyNotFoundException("Notification not found.");
 
         if (notification.MemberId != memberId)
-            throw new UnauthorizedAccessException($"❌ MemberId mismatch: notification.MemberId={notification.MemberId} vs memberId={memberId}");
+            throw new UnauthorizedAccessException("Cannot accept someone else's notification.");
 
         if (notification.Type != NotificationType.WaitlistSpotOpened || notification.LessonId == null)
-            throw new InvalidOperationException($"❌ Invalid notification type: Type={notification.Type}, LessonId={notification.LessonId}");
-
-        _logger.LogInformation("🔍 Looking for waitlist reservation: LessonId={LessonId}, MemberId={MemberId}", notification.LessonId, memberId);
+            throw new InvalidOperationException("This notification is not a waitlist spot offer.");
 
         var reservation = await _dbContext.LessonReservations
             .FirstOrDefaultAsync(
@@ -129,28 +114,19 @@ public class NotificationService : INotificationService
                      x.MemberId == memberId &&
                      x.Status == LessonReservationStatus.Waitlisted,
                 cancellationToken)
-            ?? throw new KeyNotFoundException($"❌ Waitlist reservation not found for lesson {notification.LessonId}, member {memberId}");
+            ?? throw new KeyNotFoundException("Waitlist reservation not found.");
 
-        _logger.LogInformation("✓ Reservation found: Id={ReservationId}, Status={Status}, WaitlistPosition={Position}",
-            reservation.Id, reservation.Status, reservation.WaitlistPosition);
-
-        _logger.LogInformation("🔄 Promoting to Reserved...");
         reservation.Status = LessonReservationStatus.Reserved;
         reservation.WaitlistPosition = null;
-
         notification.Status = NotificationStatus.Sent;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("✓ Database saved");
 
-        // After saving, update remaining waitlist positions
         var remainingWaitlisted = await _dbContext.LessonReservations
             .Where(x => x.LessonId == notification.LessonId &&
                        x.Status == LessonReservationStatus.Waitlisted)
             .OrderBy(x => x.WaitlistPosition)
             .ToListAsync(cancellationToken);
-
-        _logger.LogInformation("🔍 Remaining waitlisted: {Count}", remainingWaitlisted.Count);
 
         for (int i = 0; i < remainingWaitlisted.Count; i++)
         {
@@ -160,10 +136,9 @@ public class NotificationService : INotificationService
         if (remainingWaitlisted.Count > 0)
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("✓ Waitlist positions updated");
         }
 
-        _logger.LogInformation("✅ AcceptWaitlistSpot SUCCESS: Member {MemberId} promoted from waitlist for lesson {LessonId}", memberId, notification.LessonId);
+        _logger.LogInformation("Member {MemberId} promoted from waitlist for lesson {LessonId}.", memberId, notification.LessonId);
     }
 
     public async Task DeclineWaitlistSpotAsync(Guid notificationId, Guid memberId, CancellationToken cancellationToken = default)

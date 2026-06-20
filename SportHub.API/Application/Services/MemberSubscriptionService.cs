@@ -110,7 +110,7 @@ public class MemberSubscriptionService : IMemberSubscriptionService
 
         subscription.AutoRenew = false;
         subscription.CancelRequestedAtUtc = DateTime.UtcNow;
-        // Status blijft Active — abonnement loopt door tot EndsAtUtc
+        // Status stays Active - the subscription keeps running until EndsAtUtc
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return MapToDto(subscription);

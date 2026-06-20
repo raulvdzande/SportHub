@@ -1,11 +1,11 @@
 namespace SportHub.App.Services;
 
 /// <summary>
-/// Realistische simulator voor GPS en RFID check-in op emulator
+/// Realistic simulator for GPS and RFID check-in on the emulator.
 /// </summary>
 public class CheckInSimulator
 {
-    // Realistische RFID tags met sporter informatie
+    // Sample RFID tags with member information
     private static readonly Dictionary<string, string> RfidDatabase = new()
     {
         { "E2002F0A1015501A6E040000", "Jan Jansen" },
@@ -18,7 +18,7 @@ public class CheckInSimulator
         { "E2002F0A1015501A6E040007", "Diana Rutten" },
     };
 
-    // Realistische gymnasium locaties in Nederland
+    // Gym locations across the Netherlands
     private static readonly Dictionary<string, (double Lat, double Lon, string City)> GymLocations = new()
     {
         { "Gym Amsterdam Central", (52.3696, 4.9052, "Amsterdam") },
@@ -34,15 +34,15 @@ public class CheckInSimulator
     };
 
     /// <summary>
-    /// Simuleert het lezen van een RFID tag met realistische delay
+    /// Simulates reading an RFID tag with a realistic delay.
     /// </summary>
     public static async Task<RfidReadResult> SimulateRfidReadAsync()
     {
-        // Realistische RFID-lees delay (500-1500ms)
+        // Realistic RFID read delay (500-1500ms)
         var delay = new Random().Next(500, 1500);
         await Task.Delay(delay);
 
-        // Random RFID tag selecteren
+        // Pick a random RFID tag
         var randomTag = RfidDatabase.ElementAt(new Random().Next(RfidDatabase.Count));
 
         return new RfidReadResult
@@ -56,15 +56,15 @@ public class CheckInSimulator
     }
 
     /// <summary>
-    /// Simuleert het bepalen van GPS locatie met realistische accuracy en delay
+    /// Simulates determining the GPS location with a realistic accuracy and delay.
     /// </summary>
     public static async Task<GpsReadResult> SimulateGpsReadAsync(string selectedGymName)
     {
-        // Realistische GPS acquire delay (2-8 seconden voor eerste lock)
+        // Realistic GPS acquire delay (2-8 seconds for the first lock)
         var delay = new Random().Next(2000, 8000);
         var startTime = DateTime.UtcNow;
 
-        // Progress callback simulatie
+        // Simulate progress callbacks
         var progressUpdates = new[] { 25, 50, 75 };
         foreach (var progress in progressUpdates)
         {
@@ -76,13 +76,13 @@ public class CheckInSimulator
             return new GpsReadResult
             {
                 IsSuccessful = false,
-                ErrorMessage = "Gym niet gevonden in database"
+                ErrorMessage = "Gym not found in database"
             };
         }
 
-        // Realistische GPS ruis (+/- 5-15 meter)
-        var latNoise = (new Random().NextDouble() - 0.5) * 0.00015; // ~15 meter in latitude
-        var lonNoise = (new Random().NextDouble() - 0.5) * 0.00015; // ~15 meter in longitude
+        // Realistic GPS noise (+/- 5-15 meters)
+        var latNoise = (new Random().NextDouble() - 0.5) * 0.00015; // ~15 meters in latitude
+        var lonNoise = (new Random().NextDouble() - 0.5) * 0.00015; // ~15 meters in longitude
 
         return new GpsReadResult
         {
@@ -100,16 +100,16 @@ public class CheckInSimulator
     }
 
     /// <summary>
-    /// Valideert of de GPS locatie dicht genoeg bij de gym is
+    /// Validates whether the GPS location is close enough to the gym.
     /// </summary>
     public static bool ValidateGpsLocation(double latitude, double longitude, double accuracy = 50)
     {
-        // Check of we in een redelijke afstand van een gym zijn (50+ meter mag)
+        // Accept the check-in when we are within a reasonable distance of a gym (50 meters or less)
         return accuracy <= 50;
     }
 
     /// <summary>
-    /// Haalt alle beschikbare gym locaties op
+    /// Returns all available gym locations.
     /// </summary>
     public static List<string> GetAvailableGymLocations() => GymLocations.Keys.ToList();
 }

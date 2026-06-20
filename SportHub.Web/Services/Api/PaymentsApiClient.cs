@@ -44,7 +44,7 @@ public class PaymentsApiClient : IPaymentsApiClient
     {
         var client = _httpClientFactory.CreateClient("Api");
 
-        // Controller verwacht een object { "paymentIntentId": "..." }, geen kale string
+        // The controller expects an object { "paymentIntentId": "..." }, not a bare string
         var dto = new SimulateStripePaymentRequestDto { PaymentIntentId = paymentIntentId };
         var response = await client.PostAsJsonAsync("api/stripe/simulate-succeeded", dto, cancellationToken);
 

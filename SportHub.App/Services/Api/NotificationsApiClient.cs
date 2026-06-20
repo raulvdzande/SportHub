@@ -49,23 +49,10 @@ public class NotificationsApiClient : INotificationsApiClient
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[API] AcceptWaitlistSpot called with notificationId={notificationId}");
             var response = await _httpClient.PostAsync($"api/notifications/{notificationId}/accept-waitlist-spot", null, ct);
-            System.Diagnostics.Debug.WriteLine($"[API] AcceptWaitlistSpot response: {response.StatusCode}");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync(ct);
-                System.Diagnostics.Debug.WriteLine($"[API] AcceptWaitlistSpot error: {error}");
-            }
-
             return response.IsSuccessStatusCode;
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[API] AcceptWaitlistSpot exception: {ex.Message}");
-            return false;
-        }
+        catch { return false; }
     }
 
     public async Task<bool> DeclineWaitlistSpotAsync(Guid notificationId, CancellationToken ct = default)

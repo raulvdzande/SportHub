@@ -50,7 +50,7 @@ public class LocationsApiClient : ILocationsApiClient
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<LocationDto>(cancellationToken: cancellationToken)
-               ?? throw new InvalidOperationException("Kon aangemaakte locatie niet lezen.");
+               ?? throw new InvalidOperationException("Could not read the created location.");
     }
 
     public async Task<LocationDto> UpdateAsync(Guid id, UpdateLocationRequestDto request, CancellationToken cancellationToken = default)
@@ -61,7 +61,7 @@ public class LocationsApiClient : ILocationsApiClient
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<LocationDto>(cancellationToken: cancellationToken)
-               ?? throw new InvalidOperationException("Kon bijgewerkte locatie niet lezen.");
+               ?? throw new InvalidOperationException("Could not read the updated location.");
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

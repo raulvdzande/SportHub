@@ -187,7 +187,7 @@ public class LessonDetailsViewModel : ViewModelBase
             var notificationId = await _reservations.RemoveParticipantAsync(Details.Id, memberId);
             StatusMessage = "Participant removed. Waitlisted member notified!";
 
-            // Store waitlist notification locally for display - use the actual ID from the API
+            // Persist the spot offer locally using the real notification id returned by the API
             if (notificationId.HasValue)
             {
                 var workoutName = Details?.WorkoutName ?? "Unknown Workout";
@@ -201,13 +201,11 @@ public class LessonDetailsViewModel : ViewModelBase
                 var json = System.Text.Json.JsonSerializer.Serialize(notificationData);
                 await _storage.SetWaitlistNotificationAsync(json);
 
-                // Send push notification to alert about the new spot
                 PushNotificationService.SendNotification(
                     "Spot Available",
                     "A spot opened! Check notifications to accept or decline.");
             }
 
-            // Reload lesson details to show updated participants
             await LoadAsync(Details.Id);
         }
         catch (TaskCanceledException)

@@ -59,33 +59,8 @@ public class NotificationsController : ControllerBase
         if (!Guid.TryParse(memberId, out var id))
             return Unauthorized();
 
-        try
-        {
-            _logger.LogInformation("AcceptWaitlistSpot: notificationId={NotificationId}, memberId={MemberId}", notificationId, id);
-            await _service.AcceptWaitlistSpotAsync(notificationId, id, cancellationToken);
-            _logger.LogInformation("AcceptWaitlistSpot SUCCESS: notificationId={NotificationId}, memberId={MemberId}", notificationId, id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning("AcceptWaitlistSpot KeyNotFound: {Message}", ex.Message);
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("AcceptWaitlistSpot Unauthorized: {Message}", ex.Message);
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning("AcceptWaitlistSpot InvalidOperation: {Message}", ex.Message);
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "AcceptWaitlistSpot exception: {Message}", ex.Message);
-            return StatusCode(500, ex.Message);
-        }
+        await _service.AcceptWaitlistSpotAsync(notificationId, id, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Decline a waitlist spot (from notification).</summary>

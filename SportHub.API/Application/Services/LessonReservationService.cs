@@ -25,13 +25,11 @@ public class LessonReservationService : ILessonReservationService
     {
         try
         {
-            // Validate member exists
             var member = await _dbContext.Members
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == memberId, cancellationToken)
                 ?? throw new KeyNotFoundException("Member not found.");
 
-            // Validate lesson exists and load details
             var lesson = await _dbContext.Lessons
                 .Include(x => x.Workout)
                 .Include(x => x.Location)
@@ -40,7 +38,6 @@ public class LessonReservationService : ILessonReservationService
                 .FirstOrDefaultAsync(x => x.Id == request.LessonId, cancellationToken)
                 ?? throw new KeyNotFoundException("Lesson not found.");
 
-            // Check if lesson is already cancelled
             if (lesson.IsCancelled)
             {
                 throw new InvalidOperationException("Cannot reserve a cancelled lesson.");
@@ -65,7 +62,6 @@ public class LessonReservationService : ILessonReservationService
                 throw new InvalidOperationException("Member already has an active reservation for this lesson.");
             }
 
-            // Get member's active subscription
             var activeSubscription = await _dbContext.MemberSubscriptions
                 .Include(x => x.Plan)
                 .AsNoTracking()
@@ -101,13 +97,9 @@ public class LessonReservationService : ILessonReservationService
                 }
             }
 
-            // Determine the capacity of the lesson
             var capacity = lesson.CapacityOverride ?? lesson.Location.Capacity;
-
-            // Count current reserved (not cancelled) reservations
             var reservedCount = lesson.Reservations.Count(x => x.Status == LessonReservationStatus.Reserved);
 
-            // Create the reservation
             var reservation = new LessonReservation
             {
                 Id = Guid.NewGuid(),
@@ -174,7 +166,6 @@ public class LessonReservationService : ILessonReservationService
             var wasReserved = reservation.Status == LessonReservationStatus.Reserved;
             var wasWaitlisted = reservation.Status == LessonReservationStatus.Waitlisted;
 
-            // Mark as cancelled
             reservation.Status = LessonReservationStatus.Cancelled;
             reservation.CancelledAtUtc = DateTime.UtcNow;
 
@@ -259,7 +250,6 @@ public class LessonReservationService : ILessonReservationService
 
             var wasReserved = reservation.Status == LessonReservationStatus.Reserved;
 
-            // Mark as cancelled
             reservation.Status = LessonReservationStatus.Cancelled;
             reservation.CancelledAtUtc = DateTime.UtcNow;
 
@@ -278,7 +268,6 @@ public class LessonReservationService : ILessonReservationService
 
                 if (nextWaitlisted != null)
                 {
-                    // Send notification asking if they want to accept the spot
                     notificationId = Guid.NewGuid();
                     var notification = new Notification
                     {
@@ -292,13 +281,8 @@ public class LessonReservationService : ILessonReservationService
                         CreatedAtUtc = DateTime.UtcNow
                     };
 
-                    _logger.LogInformation("CREATING NOTIFICATION: Id={NotificationId}, MemberId={MemberId}, LessonId={LessonId}, Type={Type}, Status={Status}",
-                        notification.Id, notification.MemberId, notification.LessonId, notification.Type, notification.Status);
-
                     _dbContext.Notifications.Add(notification);
                     await _dbContext.SaveChangesAsync(cancellationToken);
-
-                    _logger.LogInformation("NOTIFICATION SAVED: {NotificationId} for member {MemberId}", notification.Id, nextWaitlisted.MemberId);
                 }
             }
 
