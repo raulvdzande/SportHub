@@ -183,9 +183,6 @@ GET  /api/checkins/history
 
 ## Projectstructuur
 
-```text
-Projectstructuur
-
 Het project is opgedeeld in vier losse onderdelen:
 
 SportHub.API
@@ -217,7 +214,7 @@ SportHub.Shared
 Gedeelde code tussen de projecten.
 
 DTO’s (data die gedeeld wordt tussen API, app en web)
-```
+
 
 De exacte mappen kunnen afwijken afhankelijk van de uiteindelijke implementatie.
 
