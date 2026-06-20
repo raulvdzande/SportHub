@@ -187,29 +187,29 @@ Het project is opgedeeld in vier losse onderdelen:
 
 SportHub.API
   Backend van de applicatie. Bevat de API en alles rondom data en businesslogica.
-    *Controllers (API endpoints)
-    *Services (logica)
-    *Data (DbContext en databaseconfiguratie)
-    *Models (entiteiten)
-    *Program.cs (startup en configuratie)
+    * Controllers (API endpoints)
+    * Services (logica)
+    * Data (DbContext en databaseconfiguratie)
+    * Models (entiteiten)
+    * Program.cs (startup en configuratie)
     
 SportHub.App
   Mobiele applicatie (MAUI).
-    *Pages (schermen)
-    *ViewModels (MVVM logica)
-    *Services (communicatie met API)
-    *Models (lokale modellen)
+    * Pages (schermen)
+    * ViewModels (MVVM logica)
+    * Services (communicatie met API)
+    * Models (lokale modellen)
 
     
 SportHub.Web
   Webdashboard voor beheer.
-    *Pages (Blazor pagina’s)
-    *Components (herbruikbare UI componenten)
-    *Services (API calls en logica)
+    * Pages (Blazor pagina’s)
+    * Components (herbruikbare UI componenten)
+    * Services (API calls en logica)
 
 SportHub.Shared
   Gedeelde code tussen de projecten.
-    *DTO’s (data die gedeeld wordt tussen API, app en web)
+    * DTO’s (data die gedeeld wordt tussen API, app en web)
 
 ---
 
