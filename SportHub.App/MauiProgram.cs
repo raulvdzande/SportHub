@@ -83,7 +83,8 @@ public static class MauiProgram
 		}
 		else if (DeviceInfo.Platform == DevicePlatform.WinUI)
 		{
-			apiBaseUrl = "https://localhost:7275/";
+			// WinUI connects over plain HTTP to avoid the HTTPS dev-certificate handshake
+			apiBaseUrl = "http://localhost:5099/";
 		}
 		else if (DeviceInfo.Platform == DevicePlatform.iOS || DeviceInfo.Platform == DevicePlatform.MacCatalyst)
 		{
